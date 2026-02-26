@@ -1,0 +1,923 @@
+<!--
+  © 2026 Summit Metal Supply. All Rights Reserved.
+  This software is proprietary and confidential.
+  Unauthorized copying, modification, distribution, or use of this
+  code, in whole or in part, is strictly prohibited without the
+  express written permission of Summit Metal Supply.
+  smsupply.ca | info@smsupply.ca
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Summit Metal Supply Roof Calculator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@latest/font/lucide.css"/>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .input-field { border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.5rem 0.75rem; width: 100%; transition: all 0.2s; }
+    .input-field:focus { border-color: #3b82f6; outline: 2px solid #dbeafe; }
+    .section-label { 
+      background: white; 
+      border: 3px solid #1e40af; 
+      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+      font-size: 2.25rem;
+      font-weight: 900;
+      letter-spacing: -2px;
+      padding: 14px 32px;
+      border-radius: 9999px;
+      min-width: 220px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .section-label:focus { 
+      border-color: #3b82f6; 
+      box-shadow: 0 0 0 6px rgb(59 130 246 / 0.3);
+      outline: none;
+    }
+    .print-only { display: none; }
+    @media print { 
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      span.print-only { display: inline !important; }
+      .dormer-modal, .howto-modal { display: none !important; }
+      .section-label { border-width: 2px; box-shadow: none; }
+      body { background: white !important; }
+
+      /* Header + summary stay on page 1, sections start on page 2 */
+      #summary-container {
+        page-break-after: always;
+        break-after: page;
+      }
+
+      /* Fix panel list overflow — show all rows in print */
+      #sections-container [id^="list-"] {
+        max-height: none !important;
+        overflow: visible !important;
+        overflow-y: visible !important;
+      }
+
+      /* Prevent page breaks inside a section */
+      #sections-container > div {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+
+      /* Stack the diagram and panel list vertically when printing */
+      .print-grid {
+        display: block !important;
+      }
+      .print-grid > * {
+        width: 100% !important;
+        margin-bottom: 1rem;
+      }
+
+      /* Force background colors to print */
+      #summary-container { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+    .modal-overlay { background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); }
+
+    /* ── Print watermark / footer on every page ─────────────────── */
+    @media print {
+      @page {
+        margin-bottom: 20mm;
+      }
+      body::after {
+        content: "© 2026 Summit Metal Supply  |  smsupply.ca  |  Proprietary & Confidential";
+        position: fixed;
+        bottom: 6mm;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 8pt;
+        font-family: 'Inter', system-ui, sans-serif;
+        color: #94a3b8;
+        letter-spacing: 0.05em;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 4mm;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 p-4 md:p-8">
+  <div class="max-w-7xl mx-auto">
+   
+    <!-- HEADER -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-6">
+      <div class="flex-1">
+        <div class="text-blue-700 text-4xl font-extrabold tracking-[-2px] mb-1">SUMMIT METAL SUPPLY</div>
+        <h1 class="text-3xl font-bold text-slate-900 flex items-center gap-3">
+          Roof Calculator
+        </h1>
+        <div class="mt-3 flex items-center gap-3">
+          <span class="font-semibold text-slate-600 whitespace-nowrap">Project Name:</span>
+          <!-- Editable input shown on screen -->
+          <input id="project-name" 
+                 type="text" 
+                 class="input-field max-w-md no-print" 
+                 placeholder="e.g. 123 Main St - Roof Replacement"
+                 oninput="projectName = this.value; document.getElementById('project-name-print').textContent = this.value;">
+          <!-- Print version of project name -->
+          <span id="project-name-print" class="print-only text-xl font-bold text-slate-800"></span>
+        </div>
+        <div class="print-only mt-1 text-sm text-slate-500" id="print-date"></div>
+      </div>
+
+      <div class="flex items-center gap-3 no-print flex-wrap">
+        <button onclick="showHowToUse()" 
+                class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-5 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm">
+          <i data-lucide="help-circle" class="w-5 h-5"></i>
+          <span class="font-semibold">How to Use</span>
+        </button>
+
+        <button onclick="saveProjectAsHTML()" 
+                class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm">
+          <i data-lucide="save" class="w-5 h-5"></i>
+          Save Project
+        </button>
+
+        <button onclick="sendToOffice()" 
+                class="bg-violet-600 hover:bg-violet-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm">
+          <i data-lucide="send" class="w-5 h-5"></i>
+          Send to Office
+        </button>
+
+        <button onclick="window.print()" 
+                class="bg-slate-800 hover:bg-slate-900 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm">
+          <i data-lucide="printer" class="w-5 h-5"></i>
+          Print / Save as PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- SUMMARY -->
+    <div id="summary-container" class="mb-8 bg-blue-900 text-white rounded-xl p-6 shadow-lg border border-blue-800">
+      <h2 class="text-xl font-bold flex items-center gap-2 mb-6">
+        <i data-lucide="calculator" class="w-6 h-6 text-blue-300"></i> Project Totals
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
+          <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-2">Total number of Panels</p>
+          <p id="total-panels" class="text-4xl font-bold">0</p>
+        </div>
+        <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
+          <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-2">Total linear feet</p>
+          <div class="flex items-baseline gap-2">
+            <p id="total-linear-ft" class="text-4xl font-bold">0.0</p>
+            <span class="text-blue-300 font-medium">ft</span>
+          </div>
+        </div>
+        <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
+          <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-2">Total Square feet</p>
+          <div class="flex items-baseline gap-2">
+            <p id="total-sq-ft" class="text-4xl font-bold">0</p>
+            <span class="text-blue-300 font-medium">sq ft</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-8 pt-6 border-t border-blue-800/30">
+        <h3 class="uppercase text-blue-300 text-sm font-black tracking-widest mb-4 flex items-center gap-2">
+          <i data-lucide="package" class="w-5 h-5"></i> Trims & Fasteners
+        </h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
+            <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-1">Ridge Caps</p>
+            <p id="ridge-caps" class="text-4xl font-bold">0</p>
+            <p class="text-blue-300 text-xs">120" pcs</p>
+          </div>
+          <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
+            <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-1">Eave Trims</p>
+            <p id="eave-trims" class="text-4xl font-bold">0</p>
+            <p class="text-blue-300 text-xs">120" pcs</p>
+          </div>
+          <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
+            <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-1">Valley Flashing</p>
+            <p id="valley-flashing" class="text-4xl font-bold">0</p>
+            <p class="text-blue-300 text-xs">120" pcs</p>
+          </div>
+          <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
+            <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-1">Hip Caps</p>
+            <p id="hip-caps" class="text-4xl font-bold">0</p>
+            <p class="text-blue-300 text-xs">120" pcs</p>
+          </div>
+          <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
+            <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-1">Gable Trim</p>
+            <p id="gable-trim" class="text-4xl font-bold">0</p>
+            <p class="text-blue-300 text-xs">120" pcs</p>
+          </div>
+          <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
+            <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-1">Screws</p>
+            <p id="total-screws" class="text-4xl font-bold">0</p>
+            <p class="text-blue-300 text-xs">Mech: 1 per 1.25 sq ft | Others: 1 per sq ft</p>
+          </div>
+          <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
+            <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-1">Clip Fasteners</p>
+            <p id="clip-fasteners" class="text-4xl font-bold">0</p>
+            <p class="text-blue-300 text-xs">Mech Seam only (1 per 1.25 sq ft)</p>
+          </div>
+          <!-- End Wall Flashing — only shown when topAgainstWall is used -->
+          <div id="end-wall-tile" class="bg-amber-700/60 p-5 rounded-lg border border-amber-500/50" style="display:none">
+            <p class="text-amber-200 text-xs font-black uppercase tracking-wider mb-1">End Wall Flashing</p>
+            <p id="end-wall-flashing" class="text-4xl font-bold">0</p>
+            <p class="text-amber-300 text-xs">120" pcs (top against wall)</p>
+          </div>
+          <!-- Side Wall Flashing — only shown when left/rightAgainstWall is used -->
+          <div id="side-wall-tile" class="bg-amber-700/60 p-5 rounded-lg border border-amber-500/50" style="display:none">
+            <p class="text-amber-200 text-xs font-black uppercase tracking-wider mb-1">Side Wall Flashing</p>
+            <p id="side-wall-flashing" class="text-4xl font-bold">0</p>
+            <p class="text-amber-300 text-xs">120" pcs (side against wall)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="sections-container" class="space-y-8"></div>
+    <div class="mt-8 flex justify-center no-print">
+      <button onclick="addSection()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-bold transition flex items-center gap-2 shadow-lg text-lg">
+        <i data-lucide="plus" class="w-6 h-6"></i> Add Section
+      </button>
+    </div>
+  </div>
+
+  <!-- DORMER MODAL -->
+  <div id="dormer-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-overlay">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+      <div class="p-6 border-b bg-slate-50 flex justify-between items-center">
+        <h3 class="font-bold text-xl text-slate-800">Triangular Dormer Settings</h3>
+        <button onclick="closeDormerModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="text-xs font-bold text-slate-500 uppercase">Left Eave to Dormer Start (In)</label>
+          <input type="number" id="m-dormer-left" class="input-field mt-1" oninput="saveDormerData()">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-slate-500 uppercase">Width of Dormer Base (In)</label>
+          <input type="number" id="m-dormer-width" class="input-field mt-1" oninput="saveDormerData()">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs font-bold text-slate-500 uppercase">Eave to Dormer (In)</label>
+            <input type="number" id="m-dormer-bottom" class="input-field mt-1" oninput="saveDormerData()">
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500 uppercase">Ridge to Dormer (In)</label>
+            <input type="number" id="m-dormer-top" class="input-field mt-1" oninput="saveDormerData()">
+          </div>
+        </div>
+      </div>
+      <div class="p-6 bg-slate-50 text-right">
+        <button onclick="closeDormerModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Save Triangle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW TO USE MODAL -->
+  <div id="howto-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-overlay">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <div class="p-6 border-b bg-slate-50 flex justify-between items-center">
+        <h3 class="font-bold text-2xl text-slate-800 flex items-center gap-3">
+          <i data-lucide="help-circle" class="w-8 h-8 text-blue-600"></i>
+          How to Use the Summit Metal Supply Roofing Calculator
+        </h3>
+        <button onclick="closeHowToUse()" class="text-slate-400 hover:text-slate-600 text-3xl leading-none">×</button>
+      </div>
+      <div class="p-8 overflow-auto max-h-[calc(90vh-120px)] prose prose-slate max-w-none text-[15px]">
+        <h4 class="text-xl font-semibold mb-4">Overview</h4>
+        <p>The program allows you to put the measurements of each section individually into the calculator. The section label defaults to A,B,C but can be edited to name the sections as you go for clarity.</p>
+
+        <h4 class="text-xl font-semibold mt-8 mb-4">Entering Measurements</h4>
+        <ul class="list-disc pl-6 space-y-2">
+          <li>When you input measurements into the first section, you must choose the profile of panels you are using. All other sections will automatically use the same profile.</li>
+          <li>Choose which side of the roof section has an angle if it is not square by selecting the proper type in the Angle box.</li>
+          <li>For Standing Seam, select the amount of steel you would like to allow for the fold under the eave trim. For all other profiles, use this number as the amount of overhang past the eave.</li>
+          <li>If there is a dormer within the section you are measuring, click the dormer box and a popup screen will appear. Put the measurements into the popup in order to calculate the panels lengths and valleys required to go over and under the dormer. Always measure from the left side of the section to achieve the left eave to dormer start.</li>
+          <li>The Eave to dormer and Ridge to dormer measurements are for dormers that do not go all the way to the peak or down to the eave line.</li>
+        </ul>
+
+        <h4 class="text-xl font-semibold mt-8 mb-4">Next Steps</h4>
+        <p>Repeat for each section.</p>
+        <p class="mt-4">You can then print, save or send your report by going back to the top of the calculator.</p>
+
+        <h4 class="text-xl font-semibold mt-8 mb-4">Questions?</h4>
+        <p>If you have any questions please contact us at <a href="mailto:info@smsupply.ca" class="text-blue-600 underline hover:underline-offset-2">info@smsupply.ca</a></p>
+      </div>
+      <div class="p-6 bg-slate-50 border-t text-right">
+        <button onclick="closeHowToUse()" class="bg-slate-800 text-white px-8 py-3 rounded-2xl font-semibold">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+  <script>
+    let _aDId = null;
+    let _pN = '';
+
+    let sections = [{
+      id: Date.now(),
+      name: 'A',
+      pitch: 4,
+      ridge: '', eave: '', height: '',
+      profile: 'tuff',
+      coverage: 36,
+      eaveFold: '', config: 'right',
+      hasDormer: false,
+      dormer: { left: 0, width: 0, bottom: 0, top: 0 },
+      topAgainstWall: false,
+      leftAgainstWall: false,
+      rightAgainstWall: false
+    }];
+
+    // ────────────────────────────────────────────────
+    // Core calculation logic
+    // ────────────────────────────────────────────────
+    function _c0mp(s) {
+      const coverage = parseFloat(s.coverage) || 0;
+      const ridge = parseFloat(s.ridge) || 0;
+      const eave = parseFloat(s.eave) || 0;
+      const height = parseFloat(s.height) || 0;
+      const eaveFold = parseFloat(s.eaveFold) || 0;
+      if (coverage <= 0 || (ridge <= 0 && eave <= 0)) return null;
+
+      const maxW = Math.max(ridge, eave);
+      const minW = Math.min(ridge, eave);
+      const totalPanelsCount = Math.ceil(maxW / coverage);
+      const widthDiff = maxW - minW;
+      const dropPerInch = widthDiff > 0 ? (height / widthDiff) : 0;
+      const _pD = [];
+      let _dU = [];
+      let _dO = [];
+
+      for (let i = 0; i < totalPanelsCount; i++) {
+        const pStart = i * coverage;
+        const pEnd = (i + 1) * coverage;
+
+        let baseLen = pStart < minW ? height : height - ((pStart - minW) * dropPerInch);
+        let stdLen = Math.ceil(Math.max(0, baseLen + eaveFold));
+
+        if (s.hasDormer) {
+          const d = s.dormer;
+          const dRight = d.left + d.width;
+          const fullyInDormer = (pStart >= d.left && pEnd <= dRight);
+
+          if (fullyInDormer) {
+            const underLen = Math.ceil(d.bottom + eaveFold);
+            _dU.push({ len: underLen });
+
+            const halfWidth = d.width / 2;
+            const peakHeight = height - d.bottom - d.top;
+
+            const getDormerHeightAt = (x) => {
+              const distFromCenter = Math.abs(x - (d.left + halfWidth));
+              return Math.max(0, peakHeight * (1 - distFromCenter / halfWidth));
+            };
+
+            const dormerH1 = getDormerHeightAt(pStart);
+            const dormerH2 = getDormerHeightAt(pEnd);
+            const minDormerHeightInPanel = Math.min(dormerH1, dormerH2);
+
+            const topLen = Math.ceil(d.top + (peakHeight - minDormerHeightInPanel));
+            _dO.push({ len: topLen });
+            continue;
+          }
+        }
+        _pD.push({ type: 'standard', len: stdLen });
+      }
+
+      if (_dU.length > 0) {
+        _pD.push(..._dU.map(u => ({ type: 'under', ...u })));
+        _pD.push(..._dO.map(o => ({ type: 'over', ...o })));
+      }
+
+      return { total: _pD.length, maxW, minW, _pD, coverage };
+    }
+
+    function _uS() {
+      let _gTP = 0;
+      let _gTI = 0;
+      let _gTSF = 0;
+      let _tRi = 0;
+      let _tEa = 0;
+      let _tVa = 0;
+      let _tHi = 0;
+      let _tGTL = 0;
+      let _mSF = 0;
+      let _tEWFI = 0;   // from topAgainstWall — ridge length
+      let _tSWFI = 0;  // from left/rightAgainstWall — side length
+
+      sections.forEach(s => {
+        const res = _c0mp(s);
+        if (res) {
+          _gTP += res._pD.length;
+          const _sI = res._pD.reduce((sum, p) => sum + p.len, 0);
+          _gTI += _sI;
+          const _sSF = (_sI / 12) * (res.coverage / 12);
+          _gTSF += _sSF;
+
+          const heightVal = parseFloat(s.height) || 0;
+          const ridgeVal  = parseFloat(s.ridge)  || 0;
+          const eaveVal   = parseFloat(s.eave)   || 0;
+
+          _tEa += eaveVal;
+
+          // ── Ridge / End-Wall Flashing ──────────────────────
+          if (s.topAgainstWall) {
+            // Ridge becomes end-wall flashing, not ridge cap
+            _tEWFI += ridgeVal;
+          } else {
+            _tRi += ridgeVal;
+          }
+
+          // ── Angled side (valley or hip) logic ─────────────
+          // Determine which physical side is the angled one based on config
+          // config: 'right' → angle is on right side (eave > ridge: hip; ridge > eave: valley)
+          // config: 'left'  → angle is on left side
+          // config: 'both'  → centred gable, both sides are square (no valley/hip unless ridge≠eave)
+          const hasAngle = Math.abs(ridgeVal - eaveVal) > 0.001 && heightVal > 0;
+
+          if (hasAngle) {
+            const diff = Math.abs(ridgeVal - eaveVal);
+            const hyp  = Math.sqrt(diff * diff + heightVal * heightVal);
+            const isValley = ridgeVal > eaveVal;   // ridge wider → valley on angled side
+            const isHip    = eaveVal > ridgeVal;   // eave wider  → hip on angled side
+
+            // Which side carries the angle?
+            // 'right' config → angled side is on the right
+            // 'left'  config → angled side is on the left
+            const angledSideIsRight = (s.config === 'right');
+            const angledSideIsLeft  = (s.config === 'left');
+
+            const sideWalled = (angledSideIsRight && s.rightAgainstWall) ||
+                               (angledSideIsLeft  && s.leftAgainstWall);
+
+            if (sideWalled) {
+              // Replace valley/hip with side wall flashing (use the hypotenuse length)
+              _tSWFI += hyp;
+            } else {
+              if (isValley) _tVa += hyp;
+              else          _tHi    += hyp;
+            }
+          }
+
+          // ── Square (vertical) side — gable trim ───────────
+          // For a right-angle section: one side is square (the non-angled side)
+          // For 'both'/centred: both sides are square gables
+          if (heightVal > 0) {
+            if (s.config === 'both') {
+              // Both sides are square gable sides
+              const leftWalled  = s.leftAgainstWall;
+              const rightWalled = s.rightAgainstWall;
+              if (!leftWalled)  {
+                // left square side
+                if (true) _tGTL += heightVal;
+              }
+              if (!rightWalled) {
+                _tGTL += heightVal;
+              }
+              // Side wall flashing for walled square sides
+              if (leftWalled)  _tSWFI += heightVal;
+              if (rightWalled) _tSWFI += heightVal;
+            } else {
+              // One angled side (handled above), one square side
+              // Square side is opposite to the angled side
+              const squareSideIsLeft  = (s.config === 'right'); // angle right → square left
+              const squareSideIsRight = (s.config === 'left');  // angle left  → square right
+
+              const squareSideWalled = (squareSideIsLeft  && s.leftAgainstWall) ||
+                                       (squareSideIsRight && s.rightAgainstWall);
+
+              if (squareSideWalled) {
+                _tSWFI += heightVal;
+              } else {
+                _tGTL += heightVal;
+              }
+            }
+          }
+
+          // ── Dormer valleys ────────────────────────────────
+          if (s.hasDormer) {
+            const dBottom = parseFloat(s.dormer.bottom) || 0;
+            const dTop    = parseFloat(s.dormer.top)    || 0;
+            const dWidth  = parseFloat(s.dormer.width)  || 0;
+            const peakH   = heightVal - dBottom - dTop;
+            if (peakH > 0 && dWidth > 0) {
+              const dormerHyp = Math.sqrt(Math.pow(dWidth / 2, 2) + Math.pow(peakH, 2));
+              _tVa += 2 * dormerHyp;
+            }
+          }
+
+          if (s.profile === 'mechanical') _mSF += _sSF;
+        }
+      });
+
+      document.getElementById('total-panels').innerText    = _gTP;
+      document.getElementById('total-linear-ft').innerText = (_gTI / 12).toFixed(1);
+      document.getElementById('total-sq-ft').innerText     = Math.ceil(_gTSF);
+
+      const _rCQ      = _tRi > 0                    ? Math.ceil(_tRi / 120 / 2)                 : 0;
+      const _eTQ      = _tEa  > 0                    ? Math.ceil(_tEa  / 120)                     : 0;
+      const _vQ         = _tVa > 0                   ? Math.ceil(_tVa / 120 / 2)                : 0;
+      const _hCQ        = _tHi   > 0                    ? Math.ceil(_tHi   / 120 / 2)                 : 0;
+      const _gTQ      = _tGTL > 0          ? Math.ceil(_tGTL / 120)           : 0;
+      const _eWFQ   = _tEWFI > 0    ? Math.ceil(_tEWFI / 120)     : 0;
+      const _sWFQ  = _tSWFI > 0   ? Math.ceil(_tSWFI / 120)    : 0;
+
+      const fastenersPerSqFt = 1 / 1.25;
+      const _scQ = (_mSF > 0)
+        ? Math.ceil(_gTSF * fastenersPerSqFt)
+        : Math.ceil(_gTSF);
+      const _clQ = _mSF > 0 ? Math.ceil(_mSF / 1.25) : 0;
+
+      document.getElementById('ridge-caps').innerText          = _rCQ;
+      document.getElementById('eave-trims').innerText          = _eTQ;
+      document.getElementById('valley-flashing').innerText     = _vQ;
+      document.getElementById('hip-caps').innerText            = _hCQ;
+      document.getElementById('gable-trim').innerText          = _gTQ;
+      document.getElementById('total-screws').innerText        = _scQ;
+      document.getElementById('clip-fasteners').innerText      = _clQ;
+      document.getElementById('end-wall-flashing').innerText   = _eWFQ;
+      document.getElementById('side-wall-flashing').innerText  = _sWFQ;
+
+      // Show/hide the wall flashing tiles based on whether they have values
+      document.getElementById('end-wall-tile').style.display  = _eWFQ  > 0 ? '' : 'none';
+      document.getElementById('side-wall-tile').style.display = _sWFQ > 0 ? '' : 'none';
+    }
+
+    // ────────────────────────────────────────────────
+    // Modal & UI Functions
+    // ────────────────────────────────────────────────
+    function _sHTU() {
+      document.getElementById('howto-modal').classList.remove('hidden');
+    }
+
+    function _cHTU() {
+      document.getElementById('howto-modal').classList.add('hidden');
+    }
+
+    function _oDM(id) {
+      _aDId = id;
+      const s = sections.find(x => x.id === id);
+      document.getElementById('m-dormer-left').value   = s.dormer.left   || '';
+      document.getElementById('m-dormer-width').value  = s.dormer.width  || '';
+      document.getElementById('m-dormer-bottom').value = s.dormer.bottom || '';
+      document.getElementById('m-dormer-top').value    = s.dormer.top    || '';
+      document.getElementById('dormer-modal').classList.remove('hidden');
+    }
+
+    function _cDM() {
+      document.getElementById('dormer-modal').classList.add('hidden');
+      if (_aDId) _uUI(_aDId);
+    }
+
+    function _sDD() {
+      const s = sections.find(x => x.id === _aDId);
+      s.dormer = {
+        left:   parseFloat(document.getElementById('m-dormer-left').value)   || 0,
+        width:  parseFloat(document.getElementById('m-dormer-width').value)  || 0,
+        bottom: parseFloat(document.getElementById('m-dormer-bottom').value) || 0,
+        top:    parseFloat(document.getElementById('m-dormer-top').value)    || 0
+      };
+      _uUI(_aDId);
+    }
+
+    // ────────────────────────────────────────────────
+    // Save Project as self-contained HTML
+    // ────────────────────────────────────────────────
+    function _spH() {
+      // Get the full source of the current page
+      const htmlSource = document.documentElement.outerHTML;
+
+      // We inject the current sections data and project name so it restores on open
+      const dataScript = `
+<script id="__saved_data__">
+  (function() {
+    window.__SAVED_PROJECT__ = ${JSON.stringify({ _pN, sections })};
+  })();
+<\/script>`;
+
+      // Insert our data script just before the closing </head>
+      const injected = htmlSource.replace('</head>', dataScript + '\n</head>');
+
+      const blob = new Blob([injected], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(_pN || 'project').replace(/[^a-z0-9]/gi, '_')}_roof_calculator.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ────────────────────────────────────────────────
+    // Restore saved project if present
+    // ────────────────────────────────────────────────
+    function _mrSP() {
+      // Set print date
+      document.getElementById('print-date').textContent = 'Printed: ' + new Date().toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' });
+
+      if (window.__SAVED_PROJECT__) {
+        const saved = window.__SAVED_PROJECT__;
+        _pN = saved._pN || '';
+        document.getElementById('project-name').value = _pN;
+        document.getElementById('project-name-print').textContent = _pN;
+        sections = saved.sections || sections;
+        // Re-assign IDs to avoid collisions on re-render
+        sections = sections.map(s => ({ ...s, id: s.id || Date.now() + Math.random() }));
+      }
+    }
+
+    function _sTO() {
+      if (!_pN.trim()) {
+        alert("Please enter a Project Name first.");
+        document.getElementById("project-name").focus();
+        return;
+      }
+
+      // Save the HTML project file
+      _spH();
+
+      // Build the email mailto link
+      const subject = encodeURIComponent(_pN);
+      const body = encodeURIComponent(
+`Hi Team,
+
+Please see the completed roof calculator for:
+
+Project: ${_pN}
+
+Total Panels: ${document.getElementById('total-panels').innerText}
+Total Sq Ft: ${document.getElementById('total-sq-ft').innerText}
+
+Questions to consider:
+• Are there roof protrusions that require plumbing or chimney boots?
+• Do you require underlayment?
+• Do you require caulking or silicone?
+• Please attach a picture of your roof sketch with sections labeled.
+
+The PDF has been saved via the print dialog — please attach it to this email.
+The project .html file has also been downloaded — please attach that too.
+
+Thank you!`
+      );
+      const _mtL = `mailto:info@smsupply.ca,tom@smsupply.ca?subject=${subject}&body=${body}`;
+
+      // Open the email client automatically after the print dialog is dismissed
+      function _oEAP() {
+        window.removeEventListener('afterprint', _oEAP);
+        // Small delay to let the print dialog fully close before opening mail client
+        setTimeout(() => { window.location.href = _mtL; }, 300);
+      }
+      window.addEventListener('afterprint', _oEAP);
+
+      // Trigger the print dialog — email will open when it closes
+      window.print();
+    }
+
+    function _uPi(id, val) {
+      const s = sections.find(x => x.id === id);
+      s.pitch = parseFloat(val) || 4;
+      const printSpan = document.getElementById(`pitch-print-${id}`);
+      if (printSpan) printSpan.textContent = `${s.pitch}/12`;
+      _uUI(id);
+    }
+
+    function _uUI(id) {
+      const s = sections.find(x => x.id === id);
+      const res = _c0mp(s);
+      const svg = document.getElementById(`svg-${id}`);
+      const listContainer = document.getElementById(`list-${id}`);
+     
+      if (!res) { 
+        svg.innerHTML = ''; 
+        listContainer.innerHTML = ''; 
+        _uS(); 
+        return; 
+      }
+
+      const w = 800, h = 300, m = 50;
+      const drawW = w - (m * 2);
+      const scale = drawW / res.maxW;
+      const hScale = (h - (m * 2)) / (parseFloat(s.height) || 1);
+      const rW = (parseFloat(s.ridge) || 0) * scale;
+      const eW = (parseFloat(s.eave) || 0) * scale;
+
+      let rX1, eX1;
+      if (s.config === 'left') { rX1 = m + drawW - rW; eX1 = m + drawW - eW; }
+      else if (s.config === 'right') { rX1 = m; eX1 = m; }
+      else { rX1 = m + (drawW - rW) / 2; eX1 = m + (drawW - eW) / 2; }
+
+      const points = `${eX1},${h-m} ${eX1+eW},${h-m} ${rX1+rW},${m} ${rX1},${m}`;
+     
+      let lines = '';
+      const step = res.coverage * scale;
+      if (s.config === 'left') {
+        for (let x = (eX1+eW) - step; x > Math.min(eX1, rX1); x -= step)
+          lines += `<line x1="${x}" y1="${m}" x2="${x}" y2="${h-m}" stroke="#cbd5e1" stroke-dasharray="4" />`;
+      } else {
+        for (let x = Math.min(eX1, rX1) + step; x < Math.max(eX1+eW, rX1+rW); x += step)
+          lines += `<line x1="${x}" y1="${m}" x2="${x}" y2="${h-m}" stroke="#cbd5e1" stroke-dasharray="4" />`;
+      }
+
+      let dormerSvg = '';
+      if (s.hasDormer) {
+        const dx = eX1 + (s.dormer.left * scale);
+        const dyBase = (h-m) - (s.dormer.bottom * hScale);
+        const dyPeak = m + (s.dormer.top * hScale);
+        const dw = s.dormer.width * scale;
+        dormerSvg = `<polygon points="${dx},${dyBase} ${dx+dw},${dyBase} ${dx+dw/2},${dyPeak}" fill="white" stroke="#ef4444" stroke-width="2" stroke-dasharray="4"/>`;
+      }
+
+      svg.innerHTML = `<polygon points="${points}" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>${lines}${dormerSvg}`;
+     
+      // Build panel list HTML
+      let rowsHtml = '';
+      let i = 0;
+      while (i < res._pD.length) {
+        let startIdx = i;
+        let current = res._pD[i];
+        while (i < res._pD.length && res._pD[i].type === current.type && res._pD[i].len === current.len) i++;
+        let count = i - startIdx;
+        let typeLabel = '';
+        if (current.type === 'under') typeLabel = ' (Under Dormer)';
+        else if (current.type === 'over') typeLabel = ' (Over Dormer)';
+       
+        rowsHtml += `<tr class="border-b">
+          <td class="p-3 text-center text-slate-400 font-medium">${count}</td>
+          <td class="p-3 font-bold text-right text-blue-700">${current.len}"${typeLabel}</td>
+        </tr>`;
+      }
+
+      listContainer.innerHTML = `
+        <table class="w-full text-xs">
+          <thead>
+            <tr class="bg-slate-50 text-[10px] uppercase font-black text-slate-400 border-b">
+              <th class="p-3 text-center">Qty</th>
+              <th class="p-3 text-right">Length</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>`;
+
+      _uS();
+    }
+
+    function _tD(id, checked) {
+      const s = sections.find(x => x.id === id);
+      s.hasDormer = checked;
+      if (checked) _oDM(id);
+      else _uUI(id);
+    }
+
+    function _tW(id, field, checked) {
+      const s = sections.find(x => x.id === id);
+      s[field] = checked;
+      _uS();
+    }
+
+    function _uV(id, field, val) {
+      const s = sections.find(x => x.id === id);
+      s[field] = val;
+      _uUI(id);
+    }
+
+    function _uPr(id, val) {
+      const s = sections.find(x => x.id === id);
+      if (s) {
+        s.profile = val;
+        s.coverage = (val === 'mechanical') ? 15.75 : 36;
+        _uUI(id);
+      }
+    }
+
+    function _aS() {
+      const nextLetter = String.fromCharCode(65 + sections.length);
+      const first = sections[0];
+      const s = {
+        id: Date.now(),
+        name: nextLetter,
+        pitch: first ? first.pitch : 4,
+        ridge: '', eave: '', height: '',
+        profile: first ? first.profile : 'tuff',
+        coverage: first ? first.coverage : 36,
+        eaveFold: first ? first.eaveFold : '',
+        config: 'right', hasDormer: false, dormer: { left: 0, width: 0, bottom: 0, top: 0 },
+        topAgainstWall: false, leftAgainstWall: false, rightAgainstWall: false
+      };
+      sections.push(s);
+      _rS(s);
+    }
+
+    function _rmS(id) {
+      if (sections.length > 1) {
+        sections = sections.filter(x => x.id !== id);
+        document.getElementById(`section-${id}`).remove();
+        _uS();
+      }
+    }
+
+    function _rS(s) {
+      const div = document.createElement('div');
+      div.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8";
+      div.id = `section-${s.id}`;
+      div.innerHTML = `
+        <div class="p-6 bg-slate-50 border-b flex justify-between items-center">
+          <div class="flex items-center gap-6">
+            <input 
+              type="text" 
+              value="${s.name}" 
+              class="section-label"
+              oninput="_uV(${s.id}, 'name', this.value)"
+            >
+            <div class="flex items-center gap-1.5 text-slate-600 font-medium">
+              <span class="text-sm">Pitch:</span>
+              <input type="number" value="${s.pitch || 4}" 
+                     class="input-field w-16 text-center text-lg font-semibold no-print" 
+                     oninput="_uPi(${s.id}, this.value)" min="1" max="24">
+              <span class="text-lg font-bold no-print">/12</span>
+              <span id="pitch-print-${s.id}" class="print-only text-lg font-bold text-slate-800">${s.pitch || 4}/12</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-4 flex-wrap">
+             <label class="flex items-center gap-2 text-sm font-bold text-slate-600 cursor-pointer no-print">
+               <input type="checkbox" ${s.hasDormer ? 'checked' : ''} onchange="_tD(${s.id}, this.checked)" class="w-4 h-4 rounded text-blue-600"> Dormer?
+             </label>
+             <label class="flex items-center gap-2 text-sm font-bold text-orange-600 cursor-pointer no-print" title="Ridge will use End Wall Flashing instead of Ridge Cap">
+               <input type="checkbox" ${s.topAgainstWall ? 'checked' : ''} onchange="_tW(${s.id}, 'topAgainstWall', this.checked)" class="w-4 h-4 rounded accent-orange-500"> Top against wall?
+             </label>
+             <label class="flex items-center gap-2 text-sm font-bold text-orange-600 cursor-pointer no-print" title="Left side will use Side Wall Flashing instead of Valley/Gable Trim">
+               <input type="checkbox" ${s.leftAgainstWall ? 'checked' : ''} onchange="_tW(${s.id}, 'leftAgainstWall', this.checked)" class="w-4 h-4 rounded accent-orange-500"> Left side against wall?
+             </label>
+             <label class="flex items-center gap-2 text-sm font-bold text-orange-600 cursor-pointer no-print" title="Right side will use Side Wall Flashing instead of Valley/Gable Trim">
+               <input type="checkbox" ${s.rightAgainstWall ? 'checked' : ''} onchange="_tW(${s.id}, 'rightAgainstWall', this.checked)" class="w-4 h-4 rounded accent-orange-500"> Right side against wall?
+             </label>
+             <button onclick="_rmS(${s.id})" class="text-slate-400 hover:text-red-500 transition no-print"><i data-lucide="trash-2" class="w-6 h-6"></i></button>
+          </div>
+        </div>
+        <div class="p-6">
+          <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6 no-print">
+            <div><label class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Ridge (In)</label><input type="number" value="${s.ridge}" class="input-field" oninput="_uV(${s.id}, 'ridge', this.value)"></div>
+            <div><label class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Eave (In)</label><input type="number" value="${s.eave}" class="input-field" oninput="_uV(${s.id}, 'eave', this.value)"></div>
+            <div><label class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Height (In)</label><input type="number" value="${s.height}" class="input-field" oninput="_uV(${s.id}, 'height', this.value)"></div>
+            <div>
+              <label class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Profile</label>
+              <select class="input-field" onchange="_uPr(${s.id}, this.value)">
+                <option value="mechanical" ${s.profile === 'mechanical' ? 'selected' : ''}>Mechanical Standing Seam (15.75" coverage)</option>
+                <option value="tuff" ${s.profile === 'tuff' ? 'selected' : ''}>Tuff Rib (36" coverage)</option>
+                <option value="diamond" ${s.profile === 'diamond' ? 'selected' : ''}>Diamond Rib (36" coverage)</option>
+              </select>
+            </div>
+            <div><label class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Eave Fold (In)</label><input type="number" value="${s.eaveFold}" class="input-field" oninput="_uV(${s.id}, 'eaveFold', this.value)"></div>
+            <div><label class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Angle</label>
+              <select class="input-field" onchange="_uV(${s.id}, 'config', this.value)">
+                <option value="right" ${s.config==='right'?'selected':''}>Right Angle</option>
+                <option value="left" ${s.config==='left'?'selected':''}>Left Angle</option>
+                <option value="both" ${s.config==='both'?'selected':''}>Both/Centered</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid lg:grid-cols-4 gap-6 print-grid">
+            <div class="lg:col-span-3 bg-slate-50 rounded-xl p-4 border flex items-center justify-center min-h-[250px]">
+              <svg id="svg-${s.id}" viewBox="0 0 800 300" class="w-full h-auto drop-shadow"></svg>
+            </div>
+            <div id="list-${s.id}" class="border rounded-xl overflow-y-auto max-h-96 bg-white"></div>
+          </div>
+        </div>`;
+      document.getElementById('sections-container').appendChild(div);
+      lucide.createIcons();
+      _uUI(s.id);
+    }
+
+    // ────────────────────────────────────────────────
+    // Project name helper — keeps screen + print in sync
+    // ────────────────────────────────────────────────
+    function _oPNC(val) {
+      _pN = val;
+      const el = document.getElementById('project-name-print');
+      if (el) el.textContent = val || '(no project name)';
+    }
+
+    // ────────────────────────────────────────────────
+    // Init: restore saved data, then render sections
+    // ────────────────────────────────────────────────
+    _mrSP();
+
+    // Populate print-only elements
+    document.getElementById('project-name-print').textContent = _pN || '(no project name)';
+    document.getElementById('print-date').textContent = 'Printed: ' + new Date().toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Keep print date fresh at print time
+    window.addEventListener('beforeprint', () => {
+      document.getElementById('project-name-print').textContent = _pN || '(no project name)';
+      document.getElementById('print-date').textContent = 'Printed: ' + new Date().toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' });
+    });
+
+    sections.forEach(_rS);
+    lucide.createIcons();
+  </script>
+</body>
+</html>
