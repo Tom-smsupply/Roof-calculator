@@ -120,29 +120,42 @@
   <script>
     let deferredPrompt, activeDormerId = null, projectName = '', sections = [];
 
-    // PREVENT REFRESH
     window.addEventListener('beforeunload', (e) => { if (sections.some(s => s.ridge || s.eave)) { e.preventDefault(); e.returnValue = ''; } });
-
-    // APP INSTALL
     window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('install-banner').style.display = 'flex'; });
     async function installApp() { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; closeInstallBanner(); } }
     function closeInstallBanner() { document.getElementById('install-banner').style.display = 'none'; }
     if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
 
-    // CORE LOGIC
     function calculate(s) {
       const cov = parseFloat(s.coverage)||0, r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0, h = parseFloat(s.height)||0, fold = parseFloat(s.eaveFold)||0;
       if (cov <= 0 || (r <= 0 && e <= 0)) return null;
       const totalP = Math.ceil(Math.max(r, e) / cov), data = [];
+      const hDiff = Math.abs(r - e);
+      const slope = hDiff > 0 ? h / hDiff : 0;
+
       for (let i = 0; i < totalP; i++) {
         const start = i * cov, end = (i+1) * cov;
-        let base = start < Math.min(r,e) ? h : h - ((start - Math.min(r,e)) * (h / Math.abs(r-e)));
+        let base = start < Math.min(r,e) ? h : h - ((start - Math.min(r,e)) * slope);
+        
         if (s.hasDormer) {
-          const d = s.dormer;
-          if (start >= d.left && end <= d.left + d.width) {
+          const d = s.dormer, dR = d.left + d.width;
+          if (start >= d.left && end <= dR) {
+            // Under Dormer stays the same (flat cut)
             data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: start });
-            const pH = h - d.bottom - d.top, dH = Math.max(0, pH * (1 - Math.abs(start - (d.left + d.width/2)) / (d.width/2)));
-            data.push({ len: Math.ceil(d.top + (pH - dH)), type: 'over', xPos: start });
+            
+            const pH = h - d.bottom - d.top;
+            const mid = d.left + d.width / 2;
+            
+            // Helper to get dormer triangle height at any X
+            const getDH = (x) => Math.max(0, pH * (1 - Math.abs(x - mid) / (d.width / 2)));
+            
+            // MATH FIX: Get the SHORTEST dormer height within panel width 
+            // (Shortest dormer height = longest roof panel length)
+            const dormerHeightAtStart = getDH(start);
+            const dormerHeightAtEnd = getDH(end);
+            const minDormerHeight = Math.min(dormerHeightAtStart, dormerHeightAtEnd);
+            
+            data.push({ len: Math.ceil(d.top + (pH - minDormerHeight)), type: 'over', xPos: start });
             continue;
           }
         }
@@ -210,7 +223,7 @@
         let lX = (s.config === 'left') ? x - (pStep/2) : x + (pStep/2), lY = h/2;
         if (p.type === 'under') lY = (h-m) - (p.len * hScale / 2);
         if (p.type === 'over') lY = m + (p.len * hScale / 2);
-        pLabels += `<g><rect x="${lX-12}" y="${lY-8}" width="24" height="16" fill="white" fill-opacity="0.9" rx="4"/><text x="${lX}" y="${lY+5}" font-size="10" font-weight="black" fill="${p.type==='standard'?'#1e40af':'#ef4444'}" text-anchor="middle">${p.len}</text></g>`;
+        pLabels += `<g><rect x="${lX-12}" y="${lY-8}" width="24" height="16" fill="white" fill-opacity="0.95" rx="4"/><text x="${lX}" y="${lY+5}" font-size="10" font-weight="black" fill="${p.type==='standard'?'#1e40af':'#ef4444'}" text-anchor="middle">${p.len}</text></g>`;
       });
 
       let dSvg = ''; if (s.hasDormer) { const dX = eX + s.dormer.left*scale, dY = (h-m) - s.dormer.bottom*hScale, dW = s.dormer.width*scale; dSvg = `<polygon points="${dX},${dY} ${dX+dW},${dY} ${dX+dW/2},${m+s.dormer.top*hScale}" fill="white" stroke="red" stroke-width="2" stroke-dasharray="4"/>`; }
@@ -250,14 +263,12 @@
       document.getElementById('sections-container').appendChild(div); lucide.createIcons(); updateUI(s.id);
     }
 
-    // --- INITIALIZATION ---
     if (window.__SAVED_PROJECT__) { 
       projectName = window.__SAVED_PROJECT__.projectName; 
       document.getElementById('project-name').value = projectName; 
       sections = window.__SAVED_PROJECT__.sections;
       sections.forEach(renderSection);
     } else {
-      // Start with Section A automatically
       addSection();
     }
     document.getElementById('print-date').textContent = new Date().toLocaleDateString();
