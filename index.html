@@ -105,7 +105,7 @@
   </div>
 
   <div id="howto-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-overlay">
-    <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
       <div class="p-6 border-b bg-slate-50 flex justify-between items-center"><h3 class="font-bold">How to Use</h3><button onclick="closeHowToUse()">×</button></div>
       <div class="p-6 overflow-auto max-h-[calc(90vh-130px)] text-sm space-y-4">
         <p>1. Choose panel profile in Section A. All sections will match.</p>
@@ -118,7 +118,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
   <script>
-    let deferredPrompt, activeDormerId = null, projectName = '', sections = [{ id: Date.now(), name: 'A', pitch: 4, ridge: '', eave: '', height: '', profile: 'tuff', coverage: 36, eaveFold: '', config: 'right', hasDormer: false, dormer: { left: 0, width: 0, bottom: 0, top: 0 }, topAgainstWall: false, leftAgainstWall: false, rightAgainstWall: false }];
+    let deferredPrompt, activeDormerId = null, projectName = '', sections = [];
 
     // PREVENT REFRESH
     window.addEventListener('beforeunload', (e) => { if (sections.some(s => s.ridge || s.eave)) { e.preventDefault(); e.returnValue = ''; } });
@@ -221,7 +221,14 @@
       updateSummary();
     }
 
-    function addSection() { const first = sections[0], s = { id: Date.now(), name: String.fromCharCode(65 + sections.length), pitch: first.pitch, ridge: '', eave: '', height: '', profile: first.profile, coverage: first.coverage, eaveFold: first.eaveFold, config: 'right', hasDormer: false, dormer: { left:0, width:0, bottom:0, top:0 }, topAgainstWall:false, leftAgainstWall:false, rightAgainstWall:false }; sections.push(s); renderSection(s); }
+    function addSection() { 
+      const nextL = String.fromCharCode(65 + sections.length);
+      const first = sections[0] || { pitch: 4, profile: 'tuff', coverage: 36, eaveFold: '' };
+      const s = { id: Date.now(), name: nextL, pitch: first.pitch, ridge: '', eave: '', height: '', profile: first.profile, coverage: first.coverage, eaveFold: first.eaveFold, config: 'right', hasDormer: false, dormer: { left:0, width:0, bottom:0, top:0 }, topAgainstWall:false, leftAgainstWall:false, rightAgainstWall:false }; 
+      sections.push(s); 
+      renderSection(s); 
+    }
+
     function validateAndSave() { if (!projectName.trim()) { alert("Please enter a Project Name."); return; } saveProjectAsHTML(); }
     function saveProjectAsHTML() { const data = `<script id="__saved_data__"> window.__SAVED_PROJECT__ = ${JSON.stringify({ projectName, sections })}; <\/script>`; const blob = new Blob([document.documentElement.outerHTML.replace('</head>', data + '</head>')], { type: 'text/html' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${projectName.replace(/[^a-z0-9]/gi, '_')}.html`; a.click(); }
     function sendToOffice() { if (!projectName.trim()) { alert("Please enter a Project Name."); return; } saveProjectAsHTML(); const body = encodeURIComponent(`Project: ${projectName}\n\nPlease attach the downloaded .html and PDF files.`); window.addEventListener('afterprint', () => { setTimeout(() => { window.location.href = `mailto:info@smsupply.ca?subject=Calculator: ${projectName}&body=${body}`; }, 500); }, { once: true }); window.print(); }
@@ -230,7 +237,7 @@
     function updateVal(id, f, val) { sections.find(x => x.id === id)[f] = val; updateUI(id); }
     function updateProfile(id, val) { const s = sections.find(x => x.id === id); s.profile = val; s.coverage = (val === 'mechanical') ? 15.75 : 36; updateUI(id); }
     function toggleDormer(id, chk) { const s = sections.find(x => x.id === id); s.hasDormer = chk; if (chk) openDormerModal(id); else updateUI(id); }
-    function openDormerModal(id) { activeDormerId = id; const s = sections.find(x => x.id === id); document.getElementById('m-dormer-left').value = s.dormer.left || ''; document.getElementById('m-dormer-width').value = s.dormer.width || ''; document.getElementById('m-dormer-bottom').value = s.dormer.bottom || ''; document.getElementById('m-dormer-top').value = s.dormer.top || ''; document.getElementById('dormer-modal').classList.remove('hidden'); }
+    function openDormerModal(id) { activeDormerId = id; const s = sections.find(x => x.id === id); document.getElementById('m-dormer-left').value = ''; document.getElementById('m-dormer-width').value = ''; document.getElementById('m-dormer-bottom').value = ''; document.getElementById('m-dormer-top').value = ''; document.getElementById('dormer-modal').classList.remove('hidden'); }
     function closeDormerModal() { document.getElementById('dormer-modal').classList.add('hidden'); updateUI(activeDormerId); }
     function saveDormerData() { const s = sections.find(x => x.id === activeDormerId); s.dormer = { left: parseFloat(document.getElementById('m-dormer-left').value)||0, width: parseFloat(document.getElementById('m-dormer-width').value)||0, bottom: parseFloat(document.getElementById('m-dormer-bottom').value)||0, top: parseFloat(document.getElementById('m-dormer-top').value)||0 }; }
     function toggleWall(id, f, chk) { sections.find(x => x.id === id)[f] = chk; updateSummary(); }
@@ -243,9 +250,17 @@
       document.getElementById('sections-container').appendChild(div); lucide.createIcons(); updateUI(s.id);
     }
 
-    if (window.__SAVED_PROJECT__) { projectName = window.__SAVED_PROJECT__.projectName; document.getElementById('project-name').value = projectName; sections = window.__SAVED_PROJECT__.sections; }
+    // --- INITIALIZATION ---
+    if (window.__SAVED_PROJECT__) { 
+      projectName = window.__SAVED_PROJECT__.projectName; 
+      document.getElementById('project-name').value = projectName; 
+      sections = window.__SAVED_PROJECT__.sections;
+      sections.forEach(renderSection);
+    } else {
+      // Start with Section A automatically
+      addSection();
+    }
     document.getElementById('print-date').textContent = new Date().toLocaleDateString();
-    sections.forEach(renderSection);
   </script>
 </body>
 </html>
