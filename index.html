@@ -15,7 +15,13 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@latest/font/lucide.css"/>
   
   <style>
-    body { font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; }
+    /* Prevents the 'Pull to Refresh' gesture on mobile while keeping scrolling normal */
+    body { 
+      font-family: 'Inter', system-ui, sans-serif; 
+      overflow-x: hidden; 
+      overscroll-behavior-y: contain; 
+    }
+
     input[type="number"]::-webkit-inner-spin-button,
     input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     
@@ -182,11 +188,40 @@
     </div>
   </div>
 
+  <div id="howto-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-overlay">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+      <div class="p-6 border-b bg-slate-50 flex justify-between items-center">
+        <h3 class="font-bold text-xl flex items-center gap-2"><i data-lucide="help-circle" class="text-blue-600"></i> How to Use</h3>
+        <button onclick="closeHowToUse()" class="text-slate-400 hover:text-slate-600">×</button>
+      </div>
+      <div class="p-6 md:p-8 overflow-auto max-h-[calc(90vh-130px)] prose prose-slate max-w-none text-sm">
+        <p>This program allows you to input measurements for each roof section individually.</p>
+        <h4 class="mb-2">Instructions</h4>
+        <ul class="space-y-2">
+          <li>Choose your panel profile in the first section.</li>
+          <li>For Standing Seam, enter the <strong>Fold</strong> allowance. For other profiles, use this for <strong>Overhang</strong>.</li>
+          <li>If an edge is against a wall, use the "Wall" checkboxes.</li>
+          <li><strong>Note:</strong> We carry many more trims than shown here. This calculator lists only common project components.</li>
+        </ul>
+        <p class="mt-4 font-bold">Contact: <a href="mailto:info@smsupply.ca" class="text-blue-600">info@smsupply.ca</a></p>
+      </div>
+      <div class="p-4 bg-slate-50 text-right"><button onclick="closeHowToUse()" class="bg-slate-800 text-white px-8 py-2 rounded-xl font-semibold">Close</button></div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
   <script>
     let activeDormerId = null;
     let projectName = '';
     let sections = [{ id: Date.now(), name: 'A', pitch: 4, ridge: '', eave: '', height: '', profile: 'tuff', coverage: 36, eaveFold: '', config: 'right', hasDormer: false, dormer: { left: 0, width: 0, bottom: 0, top: 0 }, topAgainstWall: false, leftAgainstWall: false, rightAgainstWall: false }];
+
+    // --- PROTECT AGAINST ACCIDENTAL REFRESH ---
+    window.addEventListener('beforeunload', (event) => {
+      if (sections.some(s => s.ridge || s.eave || s.height)) {
+        event.preventDefault();
+        event.returnValue = ''; // Required for some browsers
+      }
+    });
 
     function calculate(s) {
       const cov = parseFloat(s.coverage) || 0, r = parseFloat(s.ridge) || 0, e = parseFloat(s.eave) || 0, h = parseFloat(s.height) || 0, fold = parseFloat(s.eaveFold) || 0;
@@ -282,11 +317,9 @@
         const labelColor = p.type === 'standard' ? '#1e40af' : '#ef4444';
         const labelX = (s.config === 'left') ? x - (pStep/2) : x + (pStep/2);
         let labelY = h/2;
-        
         if (p.type === 'under') labelY = (h-m) - (p.len * hScale / 2);
         if (p.type === 'over') labelY = m + (p.len * hScale / 2);
 
-        // Created a grouped label with background RECT to ensure visibility
         pLabels += `
           <g>
             <rect x="${labelX - 12}" y="${labelY - 8}" width="24" height="16" fill="white" fill-opacity="0.95" rx="4" />
@@ -300,12 +333,7 @@
         dSvg = `<polygon points="${dX},${dY} ${dX+dW},${dY} ${dX+dW/2},${m+s.dormer.top*hScale}" fill="white" stroke="red" stroke-width="2" stroke-dasharray="4"/>`; 
       }
       
-      // ORDER MATTERS: Labels are placed last so they sit on top of the red dormer lines
-      svg.innerHTML = `
-        <polygon points="${eX},${h-m} ${eX+eW},${h-m} ${rX+rW},${m} ${rX},${m}" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
-        ${pLines}
-        ${dSvg}
-        ${pLabels}`;
+      svg.innerHTML = `<polygon points="${eX},${h-m} ${eX+eW},${h-m} ${rX+rW},${m} ${rX},${m}" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>${pLines}${dSvg}${pLabels}`;
 
       let rows = '', idx = 0;
       while (idx < res.panelData.length) {
