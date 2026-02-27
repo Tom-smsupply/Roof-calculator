@@ -140,6 +140,11 @@
             <p class="text-blue-200 text-[10px] font-black uppercase mb-1">Screws</p>
             <p id="total-screws" class="text-2xl font-bold">0</p>
           </div>
+          <div id="clips-tile" class="bg-indigo-700/60 p-3 rounded-lg border border-indigo-500/50" style="display:none">
+            <p class="text-indigo-200 text-[10px] font-black uppercase mb-1">Clip Fasteners</p>
+            <p id="clip-fasteners" class="text-2xl font-bold">0</p>
+            <p class="text-indigo-300 text-[10px]">Mech Seam only</p>
+          </div>
           <div id="end-wall-tile" class="bg-amber-700/60 p-3 rounded-lg border border-amber-500/50" style="display:none">
             <p class="text-amber-200 text-[10px] font-black uppercase mb-1">End Wall Flash</p>
             <p id="end-wall-flashing" class="text-2xl font-bold">0</p>
@@ -271,6 +276,12 @@
       document.getElementById('end-wall-flashing').innerText = Math.ceil(tEndWall / 120);
       document.getElementById('side-wall-flashing').innerText = Math.ceil(tSideWall / 120);
       document.getElementById('total-screws').innerText = Math.ceil(mechSq > 0 ? grandSq / 1.25 : grandSq);
+      
+      // Clips display logic
+      const clipFastenersQty = Math.ceil(mechSq / 1.25);
+      document.getElementById('clip-fasteners').innerText = clipFastenersQty;
+      document.getElementById('clips-tile').style.display = mechSq > 0 ? '' : 'none';
+
       document.getElementById('end-wall-tile').style.display = tEndWall > 0 ? '' : 'none';
       document.getElementById('side-wall-tile').style.display = tSideWall > 0 ? '' : 'none';
     }
@@ -292,7 +303,16 @@
 
     function updatePitch(id, val) { const s = sections.find(x => x.id === id); s.pitch = parseFloat(val) || 4; document.getElementById(`pitch-print-${id}`).textContent = s.pitch; updateUI(id); }
     function updateVal(id, field, val) { const s = sections.find(x => x.id === id); s[field] = val; updateUI(id); }
-    function updateProfile(id, val) { const s = sections.find(x => x.id === id); if (s) { s.profile = val; s.coverage = (val === 'mechanical') ? 15.75 : 36; updateUI(id); } }
+    
+    function updateProfile(id, val) { 
+      const s = sections.find(x => x.id === id); 
+      if (s) { 
+        s.profile = val; 
+        s.coverage = (val === 'mechanical') ? 15.75 : 36; 
+        updateUI(id); 
+      } 
+    }
+
     function showHowToUse() { document.getElementById('howto-modal').classList.remove('hidden'); }
     function closeHowToUse() { document.getElementById('howto-modal').classList.add('hidden'); }
     function toggleDormer(id, chk) { const s = sections.find(x => x.id === id); s.hasDormer = chk; if (chk) openDormerModal(id); else updateUI(id); }
@@ -307,7 +327,6 @@
       const w = 800, h = 300, m = 50, scale = (w - 2*m) / res.maxW, hScale = (h - 2*m) / (parseFloat(s.height)||1), rW = (parseFloat(s.ridge)||0)*scale, eW = (parseFloat(s.eave)||0)*scale;
       let rX, eX; if (s.config === 'left') { rX = m + (w-2*m) - rW; eX = m + (w-2*m) - eW; } else if (s.config === 'right') { rX = m; eX = m; } else { rX = m + (w-2*m-rW)/2; eX = m + (w-2*m-eW)/2; }
       
-      // RESTORED PANEL DRAWING LOGIC
       let pLines = '';
       const pStep = res.coverage * scale;
       if (s.config === 'left') {
@@ -338,7 +357,12 @@
       updateSummary();
     }
 
-    function addSection() { const first = sections[0], s = { id: Date.now(), name: String.fromCharCode(65 + sections.length), pitch: first.pitch, ridge: '', eave: '', height: '', profile: first.profile, coverage: first.coverage, eaveFold: first.eaveFold, config: 'right', hasDormer: false, dormer: { left:0, width:0, bottom:0, top:0 }, topAgainstWall:false, leftAgainstWall:false, rightAgainstWall:false }; sections.push(s); renderSection(s); }
+    function addSection() { 
+      const first = sections[0], s = { id: Date.now(), name: String.fromCharCode(65 + sections.length), pitch: first.pitch, ridge: '', eave: '', height: '', profile: first.profile, coverage: first.coverage, eaveFold: first.eaveFold, config: 'right', hasDormer: false, dormer: { left:0, width:0, bottom:0, top:0 }, topAgainstWall:false, leftAgainstWall:false, rightAgainstWall:false }; 
+      sections.push(s); 
+      renderSection(s); 
+    }
+    
     function removeSection(id) { if (sections.length > 1) { sections = sections.filter(x => x.id !== id); document.getElementById(`section-${id}`).remove(); updateSummary(); } }
 
     function renderSection(s) {
@@ -369,7 +393,7 @@
             <div><label class="text-[10px] font-black uppercase text-slate-400">Ridge</label><input type="number" value="${s.ridge}" class="input-field" oninput="updateVal(${s.id}, 'ridge', this.value)"></div>
             <div><label class="text-[10px] font-black uppercase text-slate-400">Eave</label><input type="number" value="${s.eave}" class="input-field" oninput="updateVal(${s.id}, 'eave', this.value)"></div>
             <div><label class="text-[10px] font-black uppercase text-slate-400">Height</label><input type="number" value="${s.height}" class="input-field" oninput="updateVal(${s.id}, 'height', this.value)"></div>
-            <div><label class="text-[10px] font-black uppercase text-slate-400">Profile</label><select class="input-field" onchange="updateProfile(${s.id}, this.value)"><option value="mechanical" ${s.profile==='mechanical'?'selected':''}>Mech (15.75")</option><option value="tuff" ${s.profile==='tuff'?'selected':''}>Tuff (36")</option></select></div>
+            <div><label class="text-[10px] font-black uppercase text-slate-400">Profile</label><select class="input-field" onchange="updateProfile(${s.id}, this.value)"><option value="mechanical" ${s.profile==='mechanical'?'selected':''}>Mech (15.75")</option><option value="tuff" ${s.profile==='tuff'?'selected':''}>Tuff (36")</option><option value="diamond" ${s.profile==='diamond'?'selected':''}>Diamond (36")</option></select></div>
             <div><label class="text-[10px] font-black uppercase text-slate-400">Fold/Over</label><input type="number" value="${s.eaveFold}" class="input-field" oninput="updateVal(${s.id}, 'eaveFold', this.value)"></div>
             <div><label class="text-[10px] font-black uppercase text-slate-400">Angle</label><select class="input-field" onchange="updateVal(${s.id}, 'config', this.value)"><option value="right" ${s.config==='right'?'selected':''}>Right</option><option value="left" ${s.config==='left'?'selected':''}>Left</option><option value="both" ${s.config==='both'?'selected':''}>Both</option></select></div>
           </div>
@@ -382,7 +406,11 @@
       lucide.createIcons(); updateUI(s.id);
     }
 
-    if (window.__SAVED_PROJECT__) { projectName = window.__SAVED_PROJECT__.projectName; document.getElementById('project-name').value = projectName; sections = window.__SAVED_PROJECT__.sections; }
+    if (window.__SAVED_PROJECT__) { 
+      projectName = window.__SAVED_PROJECT__.projectName; 
+      document.getElementById('project-name').value = projectName; 
+      sections = window.__SAVED_PROJECT__.sections; 
+    }
     document.getElementById('print-date').textContent = new Date().toLocaleDateString();
     sections.forEach(renderSection);
   </script>
