@@ -26,8 +26,6 @@
     .print-only { display: none; }
     @media print { .no-print { display: none !important; } .print-only { display: block !important; } #summary-container { page-break-after: always; break-after: page; } .pitch-suffix-print { display: inline !important; font-weight: bold; } }
     .modal-overlay { background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); }
-    
-    /* Formatting for the help text */
     .how-to-content h4 { color: #1e40af; font-weight: 800; margin-top: 1.5rem; margin-bottom: 0.5rem; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
     .how-to-content p { margin-bottom: 0.75rem; color: #334155; }
     .how-to-content ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 1rem; color: #475569; }
@@ -50,7 +48,12 @@
   <div class="max-w-7xl mx-auto">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-6">
       <div class="flex-1">
-        <div class="text-blue-700 text-3xl md:text-4xl font-extrabold tracking-[-2px] mb-1">SUMMIT METAL SUPPLY</div>
+        <div class="flex flex-col md:flex-row md:items-baseline gap-2 md:gap-4 mb-1">
+            <div class="text-blue-700 text-3xl md:text-4xl font-extrabold tracking-[-2px]">SUMMIT METAL SUPPLY</div>
+            <a href="https://smsupply.ca" target="_blank" class="no-print text-blue-600 hover:text-blue-800 text-sm font-bold flex items-center gap-1 transition">
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i> smsupply.ca
+            </a>
+        </div>
         <h1 class="text-2xl md:text-3xl font-bold text-slate-900">Roof Calculator</h1>
         <div class="mt-3 flex flex-col md:flex-row md:items-center gap-3">
           <span class="font-semibold text-slate-600">Project Name:</span>
@@ -101,14 +104,14 @@
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
       <div class="p-4 border-b bg-slate-50 flex justify-between items-center"><h3 class="font-bold">Dormer Settings</h3><button onclick="closeDormerModal()">×</button></div>
       <div class="p-6 space-y-4">
-        <div><label class="text-[10px] font-bold">Left to Dormer (In)</label><input type="number" id="m-dormer-left" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
-        <div><label class="text-[10px] font-bold">Width (In)</label><input type="number" id="m-dormer-width" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
+        <div><label class="text-[10px] font-bold text-slate-500 uppercase">Left to Dormer (In)</label><input type="number" id="m-dormer-left" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
+        <div><label class="text-[10px] font-bold text-slate-500 uppercase">Width (In)</label><input type="number" id="m-dormer-width" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
         <div class="grid grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold">Eave to Dormer</label><input type="number" id="m-dormer-bottom" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
-          <div><label class="text-[10px] font-bold">Ridge to Dormer</label><input type="number" id="m-dormer-top" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
+          <div><label class="text-[10px] font-bold text-slate-500 uppercase">Eave to Dormer</label><input type="number" id="m-dormer-bottom" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
+          <div><label class="text-[10px] font-bold text-slate-500 uppercase">Ridge to Dormer</label><input type="number" id="m-dormer-top" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
         </div>
       </div>
-      <div class="p-4 bg-slate-50 text-right"><button onclick="closeDormerModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg">Save</button></div>
+      <div class="p-4 bg-slate-50 text-right"><button onclick="closeDormerModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Save</button></div>
     </div>
   </div>
 
@@ -119,49 +122,43 @@
         <button onclick="closeHowToUse()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">×</button>
       </div>
       <div class="p-6 md:p-8 overflow-auto max-h-[calc(90vh-130px)] how-to-content text-sm">
-        <p>Welcome to the Summit Metal Supply Roof Calculator. This tool is designed to provide professional estimates for metal roofing panels and trims. For accuracy, please follow the measurement guidelines below.</p>
+        <p>Welcome to the Summit Metal Supply Roof Calculator. This tool provides professional estimates for metal roofing panels and trims. For accuracy, please follow the measurement guidelines below.</p>
         
         <h4>Section Setup</h4>
-        <p>Each individual roof plane (face) should be entered as a separate section (A, B, C, etc.).</p>
+        <p>Each roof plane should be entered as a separate section (A, B, C, etc.).</p>
         <ul>
-          <li><strong>Profile:</strong> Choose your panel style in Section A. All other sections will automatically sync to this profile for consistency.</li>
-          <li><strong>Pitch:</strong> Enter the vertical rise over a 12" run. This ensures the panel geometry matches your actual roof slope.</li>
+          <li><strong>Profile:</strong> Choose your panel style in Section A. All sections sync to this profile.</li>
+          <li><strong>Pitch:</strong> vertical rise over a 12" run.</li>
           <li><strong>Angle Type:</strong> 
             <ul>
-              <li><em>Right/Left Angle:</em> One side is straight up (square), the other is angled.</li>
-              <li><em>Both/Centered:</em> A standard centered gable section where both sides are angled.</li>
+              <li><em>Right/Left Angle:</em> One side square, one side angled.</li>
+              <li><em>Both/Centered:</em> A standard centered gable.</li>
             </ul>
           </li>
         </ul>
 
         <h4>Primary Measurements (Inches)</h4>
         <ul>
-          <li><strong>Ridge:</strong> The measurement across the very top of the roof section.</li>
-          <li><strong>Eave:</strong> The measurement across the bottom edge where the gutter would sit.</li>
-          <li><strong>Height:</strong> The flat-down distance from the ridge to the eave (not the slope length). The calculator uses this and the pitch to find the actual panel lengths.</li>
-          <li><strong>Fold/Overhang:</strong> 
-            <ul>
-              <li>For <em>Mechanical Standing Seam</em>, enter the inches needed for the eave fold.</li>
-              <li>For <em>Tuff or Diamond Rib</em>, enter the inches you want the panels to overhang the eave.</li>
-            </ul>
-          </li>
+          <li><strong>Ridge:</strong> Measurement across the very top.</li>
+          <li><strong>Eave:</strong> Measurement across the bottom gutter line.</li>
+          <li><strong>Height:</strong> The flat-down distance from ridge to eave (not the slope length).</li>
+          <li><strong>Fold/Overhang:</strong> Fold for Standing Seam, Overhang for Tuff/Diamond Rib.</li>
         </ul>
 
         <h4>Wall Flashing & Specialized Trims</h4>
-        <p>Checking a "Wall" box tells the calculator that the roof edge meets a vertical wall rather than an open edge.</p>
+        <p>Toggle "Wall" checkboxes if an edge meets a vertical wall.</p>
         <ul>
-          <li><strong>Top wall:</strong> Replaces Ridge Cap with End-Wall Flashing.</li>
-          <li><strong>Side wall:</strong> Replaces Gable Trim or Valleys with Side-Wall Flashing for that specific side.</li>
-          <li><strong>Note:</strong> We stock many more trims than listed here. This tool covers standard configurations; contact us for custom flashing needs.</li>
+          <li><strong>Top wall:</strong> Swaps Ridge Cap for End-Wall Flashing.</li>
+          <li><strong>Side wall:</strong> Swaps Gable/Valley for Side-Wall Flashing.</li>
         </ul>
 
         <h4>Dormer Entry</h4>
-        <p>When a dormer exists within a section, toggle the "Dormer" checkbox. <strong>Always measure from the far-left edge of the current roof section</strong> to locate the dormer start.</p>
+        <p>Toggle "Dormer" and measure from the <strong>far-left edge</strong> of that specific section.</p>
         <ul>
-          <li><strong>Left to Dormer:</strong> Distance from the left section edge to the start of the dormer base.</li>
-          <li><strong>Width:</strong> The full span of the dormer at its base.</li>
-          <li><strong>Eave to Dormer:</strong> The distance panels run from the eave up to the bottom of the dormer.</li>
-          <li><strong>Ridge to Dormer:</strong> The distance panels run from the ridge down to the dormer peak.</li>
+          <li><strong>Left to Dormer:</strong> Distance from left edge to dormer start.</li>
+          <li><strong>Width:</strong> Full span of dormer base.</li>
+          <li><strong>Eave to Dormer:</strong> Run from eave up to dormer bottom.</li>
+          <li><strong>Ridge to Dormer:</strong> Run from ridge down to dormer peak.</li>
         </ul>
 
         <p class="mt-6 pt-4 border-t font-bold text-slate-900">Need help? Email our experts at: <a href="mailto:info@smsupply.ca" class="text-blue-600 underline">info@smsupply.ca</a></p>
@@ -303,10 +300,9 @@
       document.getElementById('project-name').value = projectName; 
       sections = window.__SAVED_PROJECT__.sections;
       sections.forEach(renderSection);
-    } else {
-      addSection();
-    }
+    } else { addSection(); }
     document.getElementById('print-date').textContent = new Date().toLocaleDateString();
+    lucide.createIcons();
   </script>
 </body>
 </html>
