@@ -35,13 +35,8 @@
       text-align: center;
     }
 
-    /* Mobile Specific Fixes */
     @media (max-width: 768px) {
-      .section-label {
-        font-size: 1.5rem;
-        padding: 8px 20px;
-        min-width: 100px;
-      }
+      .section-label { font-size: 1.5rem; padding: 8px 20px; min-width: 100px; }
       svg, table { max-width: 100% !important; height: auto; }
     }
 
@@ -190,13 +185,13 @@
         <button onclick="closeHowToUse()" class="text-slate-400 hover:text-slate-600">×</button>
       </div>
       <div class="p-6 md:p-8 overflow-auto max-h-[calc(90vh-130px)] prose prose-slate max-w-none text-sm">
-        <p>This program allows you to input measurements for each roof section individually. Use the section labels (A, B, C) to organize your layout.</p>
+        <p>This program allows you to input measurements for each roof section individually.</p>
         <h4 class="mb-2">Instructions</h4>
         <ul class="space-y-2">
-          <li>Choose your panel profile in the first section. All others will automatically match.</li>
+          <li>Choose your panel profile in the first section.</li>
           <li>For Standing Seam, enter the <strong>Fold</strong> allowance. For other profiles, use this for <strong>Overhang</strong>.</li>
-          <li>If an edge is against a wall, use the "Wall" checkboxes. This automatically swaps standard trims for flashing.</li>
-          <li><strong>Note:</strong> We carry many more trims than shown here. This calculator lists only the most common project components.</li>
+          <li>If an edge is against a wall, use the "Wall" checkboxes.</li>
+          <li><strong>Note:</strong> We carry many more trims than shown here. This calculator lists only common project components.</li>
         </ul>
         <p class="mt-4 font-bold">Contact: <a href="mailto:info@smsupply.ca" class="text-blue-600">info@smsupply.ca</a></p>
       </div>
@@ -290,7 +285,7 @@
     function sendToOffice() {
       if (!projectName.trim()) { alert("Please enter a Project Name."); return; }
       saveProjectAsHTML();
-      const body = encodeURIComponent(`Project: ${projectName}\n\nINSTRUCTIONS FOR SENDER:\nThe PDF and .html files have been downloaded to your 'Downloads' folder. Please manually attach BOTH files to this email before sending.\n\nSummary:\n- Panels: ${document.getElementById('total-panels').innerText}\n- Sq Ft: ${document.getElementById('total-sq-ft').innerText}`);
+      const body = encodeURIComponent(`Project: ${projectName}\n\nINSTRUCTIONS FOR SENDER:\nThe PDF and .html files have been downloaded to your 'Downloads' folder. Please manually attach BOTH files to this email.\n\nSummary:\n- Panels: ${document.getElementById('total-panels').innerText}\n- Sq Ft: ${document.getElementById('total-sq-ft').innerText}`);
       window.addEventListener('afterprint', () => { setTimeout(() => { window.location.href = `mailto:info@smsupply.ca,tom@smsupply.ca?subject=Request: ${projectName}&body=${body}`; }, 500); }, { once: true });
       window.print();
     }
@@ -311,8 +306,29 @@
       if (!res) return;
       const w = 800, h = 300, m = 50, scale = (w - 2*m) / res.maxW, hScale = (h - 2*m) / (parseFloat(s.height)||1), rW = (parseFloat(s.ridge)||0)*scale, eW = (parseFloat(s.eave)||0)*scale;
       let rX, eX; if (s.config === 'left') { rX = m + (w-2*m) - rW; eX = m + (w-2*m) - eW; } else if (s.config === 'right') { rX = m; eX = m; } else { rX = m + (w-2*m-rW)/2; eX = m + (w-2*m-eW)/2; }
-      let dSvg = ''; if (s.hasDormer) { const dX = eX + s.dormer.left*scale, dY = (h-m) - s.dormer.bottom*hScale, dW = s.dormer.width*scale; dSvg = `<polygon points="${dX},${dY} ${dX+dW},${dY} ${dX+dW/2},${m+s.dormer.top*hScale}" fill="white" stroke="red" stroke-width="2" stroke-dasharray="4"/>`; }
-      svg.innerHTML = `<polygon points="${eX},${h-m} ${eX+eW},${h-m} ${rX+rW},${m} ${rX},${m}" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>${dSvg}`;
+      
+      // RESTORED PANEL DRAWING LOGIC
+      let pLines = '';
+      const pStep = res.coverage * scale;
+      if (s.config === 'left') {
+        for (let x = (eX + eW) - pStep; x > Math.min(eX, rX); x -= pStep) 
+          pLines += `<line x1="${x}" y1="${m}" x2="${x}" y2="${h-m}" stroke="#cbd5e1" stroke-dasharray="4" />`;
+      } else {
+        for (let x = Math.min(eX, rX) + pStep; x < Math.max(eX+eW, rX+rW); x += pStep)
+          pLines += `<line x1="${x}" y1="${m}" x2="${x}" y2="${h-m}" stroke="#cbd5e1" stroke-dasharray="4" />`;
+      }
+
+      let dSvg = ''; 
+      if (s.hasDormer) { 
+        const dX = eX + s.dormer.left*scale, dY = (h-m) - s.dormer.bottom*hScale, dW = s.dormer.width*scale; 
+        dSvg = `<polygon points="${dX},${dY} ${dX+dW},${dY} ${dX+dW/2},${m+s.dormer.top*hScale}" fill="white" stroke="red" stroke-width="2" stroke-dasharray="4"/>`; 
+      }
+      
+      svg.innerHTML = `
+        <polygon points="${eX},${h-m} ${eX+eW},${h-m} ${rX+rW},${m} ${rX},${m}" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+        ${pLines}
+        ${dSvg}`;
+
       let rows = '', i = 0;
       while (i < res.panelData.length) {
         let start = i, p = res.panelData[i]; while (i < res.panelData.length && res.panelData[i].len === p.len) i++;
