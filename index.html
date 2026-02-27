@@ -143,7 +143,6 @@
           <div id="clips-tile" class="bg-indigo-700/60 p-3 rounded-lg border border-indigo-500/50" style="display:none">
             <p class="text-indigo-200 text-[10px] font-black uppercase mb-1">Clip Fasteners</p>
             <p id="clip-fasteners" class="text-2xl font-bold">0</p>
-            <p class="text-indigo-300 text-[10px]">Mech Seam only</p>
           </div>
           <div id="end-wall-tile" class="bg-amber-700/60 p-3 rounded-lg border border-amber-500/50" style="display:none">
             <p class="text-amber-200 text-[10px] font-black uppercase mb-1">End Wall Flash</p>
@@ -172,35 +171,14 @@
         <button onclick="closeDormerModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
       </div>
       <div class="p-6 space-y-4">
-        <div><label class="text-[10px] font-bold text-slate-500 uppercase">Left to Dormer Start (In)</label><input type="number" id="m-dormer-left" class="input-field mt-1" oninput="saveDormerData()"></div>
-        <div><label class="text-[10px] font-bold text-slate-500 uppercase">Width of Dormer (In)</label><input type="number" id="m-dormer-width" class="input-field mt-1" oninput="saveDormerData()"></div>
+        <div><label class="text-[10px] font-bold text-slate-500 uppercase">Left to Dormer Start (In)</label><input type="number" id="m-dormer-left" class="input-field mt-1" oninput="saveDormerData()" placeholder="Enter inches"></div>
+        <div><label class="text-[10px] font-bold text-slate-500 uppercase">Width of Dormer (In)</label><input type="number" id="m-dormer-width" class="input-field mt-1" oninput="saveDormerData()" placeholder="Enter inches"></div>
         <div class="grid grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-slate-500 uppercase">Eave to Dormer (In)</label><input type="number" id="m-dormer-bottom" class="input-field mt-1" oninput="saveDormerData()"></div>
-          <div><label class="text-[10px] font-bold text-slate-500 uppercase">Ridge to Dormer (In)</label><input type="number" id="m-dormer-top" class="input-field mt-1" oninput="saveDormerData()"></div>
+          <div><label class="text-[10px] font-bold text-slate-500 uppercase">Eave to Dormer (In)</label><input type="number" id="m-dormer-bottom" class="input-field mt-1" oninput="saveDormerData()" placeholder="Enter inches"></div>
+          <div><label class="text-[10px] font-bold text-slate-500 uppercase">Ridge to Dormer (In)</label><input type="number" id="m-dormer-top" class="input-field mt-1" oninput="saveDormerData()" placeholder="Enter inches"></div>
         </div>
       </div>
       <div class="p-4 bg-slate-50 text-right"><button onclick="closeDormerModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Save</button></div>
-    </div>
-  </div>
-
-  <div id="howto-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-overlay">
-    <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
-      <div class="p-6 border-b bg-slate-50 flex justify-between items-center">
-        <h3 class="font-bold text-xl flex items-center gap-2"><i data-lucide="help-circle" class="text-blue-600"></i> How to Use</h3>
-        <button onclick="closeHowToUse()" class="text-slate-400 hover:text-slate-600">×</button>
-      </div>
-      <div class="p-6 md:p-8 overflow-auto max-h-[calc(90vh-130px)] prose prose-slate max-w-none text-sm">
-        <p>This program allows you to input measurements for each roof section individually.</p>
-        <h4 class="mb-2">Instructions</h4>
-        <ul class="space-y-2">
-          <li>Choose your panel profile in the first section.</li>
-          <li>For Standing Seam, enter the <strong>Fold</strong> allowance. For other profiles, use this for <strong>Overhang</strong>.</li>
-          <li>If an edge is against a wall, use the "Wall" checkboxes.</li>
-          <li><strong>Note:</strong> We carry many more trims than shown here. This calculator lists only common project components.</li>
-        </ul>
-        <p class="mt-4 font-bold">Contact: <a href="mailto:info@smsupply.ca" class="text-blue-600">info@smsupply.ca</a></p>
-      </div>
-      <div class="p-4 bg-slate-50 text-right"><button onclick="closeHowToUse()" class="bg-slate-800 text-white px-8 py-2 rounded-xl font-semibold">Close</button></div>
     </div>
   </div>
 
@@ -214,23 +192,25 @@
       const cov = parseFloat(s.coverage) || 0, r = parseFloat(s.ridge) || 0, e = parseFloat(s.eave) || 0, h = parseFloat(s.height) || 0, fold = parseFloat(s.eaveFold) || 0;
       if (cov <= 0 || (r <= 0 && e <= 0)) return null;
       const maxW = Math.max(r, e), minW = Math.min(r, e), totalP = Math.ceil(maxW / cov), diff = maxW - minW, drop = diff > 0 ? (h / diff) : 0;
-      const data = []; let dUnders = [], dOvers = [];
+      const data = [];
+      
       for (let i = 0; i < totalP; i++) {
         const start = i * cov, end = (i + 1) * cov;
         let base = start < minW ? h : h - ((start - minW) * drop);
+        
         if (s.hasDormer) {
           const d = s.dormer, dR = d.left + d.width;
           if (start >= d.left && end <= dR) {
-            dUnders.push({ len: Math.ceil(d.bottom + fold), type: 'under' });
+            data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: start });
             const peakH = h - d.bottom - d.top;
             const getDH = (x) => Math.max(0, peakH * (1 - Math.abs(x - (d.left + d.width/2)) / (d.width/2)));
-            dOvers.push({ len: Math.ceil(d.top + (peakH - Math.min(getDH(start), getDH(end)))), type: 'over' });
+            data.push({ len: Math.ceil(d.top + (peakH - Math.min(getDH(start), getDH(end)))), type: 'over', xPos: start });
             continue;
           }
         }
-        data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard' });
+        data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard', xPos: start });
       }
-      return { total: data.length + dUnders.length + dOvers.length, maxW, panelData: [...data, ...dUnders, ...dOvers], coverage: cov };
+      return { total: data.length, maxW, panelData: data, coverage: cov };
     }
 
     function updateSummary() {
@@ -276,14 +256,74 @@
       document.getElementById('end-wall-flashing').innerText = Math.ceil(tEndWall / 120);
       document.getElementById('side-wall-flashing').innerText = Math.ceil(tSideWall / 120);
       document.getElementById('total-screws').innerText = Math.ceil(mechSq > 0 ? grandSq / 1.25 : grandSq);
-      
-      // Clips display logic
-      const clipFastenersQty = Math.ceil(mechSq / 1.25);
-      document.getElementById('clip-fasteners').innerText = clipFastenersQty;
+      document.getElementById('clip-fasteners').innerText = Math.ceil(mechSq / 1.25);
       document.getElementById('clips-tile').style.display = mechSq > 0 ? '' : 'none';
-
       document.getElementById('end-wall-tile').style.display = tEndWall > 0 ? '' : 'none';
       document.getElementById('side-wall-tile').style.display = tSideWall > 0 ? '' : 'none';
+    }
+
+    function updateUI(id) {
+      const s = sections.find(x => x.id === id), res = calculate(s), svg = document.getElementById(`svg-${id}`), list = document.getElementById(`list-${id}`);
+      if (!res) return;
+      const w = 800, h = 300, m = 50, scale = (w - 2*m) / res.maxW, hScale = (h - 2*m) / (parseFloat(s.height)||1), rW = (parseFloat(s.ridge)||0)*scale, eW = (parseFloat(s.eave)||0)*scale;
+      let rX, eX; if (s.config === 'left') { rX = m + (w-2*m) - rW; eX = m + (w-2*m) - eW; } else if (s.config === 'right') { rX = m; eX = m; } else { rX = m + (w-2*m-rW)/2; eX = m + (w-2*m-eW)/2; }
+      
+      let pLines = '';
+      let pLabels = '';
+      const pStep = res.coverage * scale;
+
+      res.panelData.forEach((p) => {
+        let x;
+        if (s.config === 'left') { x = (eX + eW) - (p.xPos * scale); } 
+        else { x = Math.min(eX, rX) + (p.xPos * scale); }
+
+        pLines += `<line x1="${x}" y1="${m}" x2="${x}" y2="${h-m}" stroke="#cbd5e1" stroke-dasharray="4" />`;
+        
+        const labelColor = p.type === 'standard' ? '#1e40af' : '#ef4444';
+        const labelX = (s.config === 'left') ? x - (pStep/2) : x + (pStep/2);
+        let labelY = h/2;
+        
+        if (p.type === 'under') labelY = (h-m) - (p.len * hScale / 2);
+        if (p.type === 'over') labelY = m + (p.len * hScale / 2);
+
+        // Created a grouped label with background RECT to ensure visibility
+        pLabels += `
+          <g>
+            <rect x="${labelX - 12}" y="${labelY - 8}" width="24" height="16" fill="white" fill-opacity="0.95" rx="4" />
+            <text x="${labelX}" y="${labelY + 5}" font-size="11" font-weight="black" fill="${labelColor}" text-anchor="middle">${p.len}"</text>
+          </g>`;
+      });
+
+      let dSvg = ''; 
+      if (s.hasDormer) { 
+        const dX = eX + s.dormer.left*scale, dY = (h-m) - s.dormer.bottom*hScale, dW = s.dormer.width*scale; 
+        dSvg = `<polygon points="${dX},${dY} ${dX+dW},${dY} ${dX+dW/2},${m+s.dormer.top*hScale}" fill="white" stroke="red" stroke-width="2" stroke-dasharray="4"/>`; 
+      }
+      
+      // ORDER MATTERS: Labels are placed last so they sit on top of the red dormer lines
+      svg.innerHTML = `
+        <polygon points="${eX},${h-m} ${eX+eW},${h-m} ${rX+rW},${m} ${rX},${m}" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+        ${pLines}
+        ${dSvg}
+        ${pLabels}`;
+
+      let rows = '', idx = 0;
+      while (idx < res.panelData.length) {
+        let start = idx, p = res.panelData[idx]; while (idx < res.panelData.length && res.panelData[idx].len === p.len && res.panelData[idx].type === p.type) idx++;
+        rows += `<tr class="border-b"><td class="p-2 text-center">${idx - start}</td><td class="p-2 text-right font-bold text-blue-700">${p.len}"${p.type !== 'standard' ? ' ('+p.type+')' : ''}</td></tr>`;
+      }
+      list.innerHTML = `<table class="w-full text-xs"><thead><tr class="bg-slate-50 border-b text-[10px] uppercase font-bold"><th class="p-2">Qty</th><th class="p-2 text-right">Len</th></tr></thead><tbody>${rows}</tbody></table>`;
+      updateSummary();
+    }
+
+    function openDormerModal(id) { 
+      activeDormerId = id; 
+      const s = sections.find(x => x.id === id); 
+      document.getElementById('m-dormer-left').value = s.dormer.left || ''; 
+      document.getElementById('m-dormer-width').value = s.dormer.width || ''; 
+      document.getElementById('m-dormer-bottom').value = s.dormer.bottom || ''; 
+      document.getElementById('m-dormer-top').value = s.dormer.top || ''; 
+      document.getElementById('dormer-modal').classList.remove('hidden'); 
     }
 
     function validateAndSave() { if (!projectName.trim()) { alert("Please enter a Project Name."); document.getElementById("project-name").focus(); return; } saveProjectAsHTML(); }
@@ -303,59 +343,13 @@
 
     function updatePitch(id, val) { const s = sections.find(x => x.id === id); s.pitch = parseFloat(val) || 4; document.getElementById(`pitch-print-${id}`).textContent = s.pitch; updateUI(id); }
     function updateVal(id, field, val) { const s = sections.find(x => x.id === id); s[field] = val; updateUI(id); }
-    
-    function updateProfile(id, val) { 
-      const s = sections.find(x => x.id === id); 
-      if (s) { 
-        s.profile = val; 
-        s.coverage = (val === 'mechanical') ? 15.75 : 36; 
-        updateUI(id); 
-      } 
-    }
-
+    function updateProfile(id, val) { const s = sections.find(x => x.id === id); if (s) { s.profile = val; s.coverage = (val === 'mechanical') ? 15.75 : 36; updateUI(id); } }
     function showHowToUse() { document.getElementById('howto-modal').classList.remove('hidden'); }
     function closeHowToUse() { document.getElementById('howto-modal').classList.add('hidden'); }
     function toggleDormer(id, chk) { const s = sections.find(x => x.id === id); s.hasDormer = chk; if (chk) openDormerModal(id); else updateUI(id); }
-    function openDormerModal(id) { activeDormerId = id; const s = sections.find(x => x.id === id); document.getElementById('m-dormer-left').value = s.dormer.left; document.getElementById('m-dormer-width').value = s.dormer.width; document.getElementById('m-dormer-bottom').value = s.dormer.bottom; document.getElementById('m-dormer-top').value = s.dormer.top; document.getElementById('dormer-modal').classList.remove('hidden'); }
     function closeDormerModal() { document.getElementById('dormer-modal').classList.add('hidden'); updateUI(activeDormerId); }
     function saveDormerData() { const s = sections.find(x => x.id === activeDormerId); s.dormer = { left: parseFloat(document.getElementById('m-dormer-left').value)||0, width: parseFloat(document.getElementById('m-dormer-width').value)||0, bottom: parseFloat(document.getElementById('m-dormer-bottom').value)||0, top: parseFloat(document.getElementById('m-dormer-top').value)||0 }; }
     function toggleWall(id, f, chk) { const s = sections.find(x => x.id === id); s[f] = chk; updateSummary(); }
-
-    function updateUI(id) {
-      const s = sections.find(x => x.id === id), res = calculate(s), svg = document.getElementById(`svg-${id}`), list = document.getElementById(`list-${id}`);
-      if (!res) return;
-      const w = 800, h = 300, m = 50, scale = (w - 2*m) / res.maxW, hScale = (h - 2*m) / (parseFloat(s.height)||1), rW = (parseFloat(s.ridge)||0)*scale, eW = (parseFloat(s.eave)||0)*scale;
-      let rX, eX; if (s.config === 'left') { rX = m + (w-2*m) - rW; eX = m + (w-2*m) - eW; } else if (s.config === 'right') { rX = m; eX = m; } else { rX = m + (w-2*m-rW)/2; eX = m + (w-2*m-eW)/2; }
-      
-      let pLines = '';
-      const pStep = res.coverage * scale;
-      if (s.config === 'left') {
-        for (let x = (eX + eW) - pStep; x > Math.min(eX, rX); x -= pStep) 
-          pLines += `<line x1="${x}" y1="${m}" x2="${x}" y2="${h-m}" stroke="#cbd5e1" stroke-dasharray="4" />`;
-      } else {
-        for (let x = Math.min(eX, rX) + pStep; x < Math.max(eX+eW, rX+rW); x += pStep)
-          pLines += `<line x1="${x}" y1="${m}" x2="${x}" y2="${h-m}" stroke="#cbd5e1" stroke-dasharray="4" />`;
-      }
-
-      let dSvg = ''; 
-      if (s.hasDormer) { 
-        const dX = eX + s.dormer.left*scale, dY = (h-m) - s.dormer.bottom*hScale, dW = s.dormer.width*scale; 
-        dSvg = `<polygon points="${dX},${dY} ${dX+dW},${dY} ${dX+dW/2},${m+s.dormer.top*hScale}" fill="white" stroke="red" stroke-width="2" stroke-dasharray="4"/>`; 
-      }
-      
-      svg.innerHTML = `
-        <polygon points="${eX},${h-m} ${eX+eW},${h-m} ${rX+rW},${m} ${rX},${m}" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
-        ${pLines}
-        ${dSvg}`;
-
-      let rows = '', i = 0;
-      while (i < res.panelData.length) {
-        let start = i, p = res.panelData[i]; while (i < res.panelData.length && res.panelData[i].len === p.len) i++;
-        rows += `<tr class="border-b"><td class="p-2 text-center">${i - start}</td><td class="p-2 text-right font-bold text-blue-700">${p.len}"${p.type !== 'standard' ? ' ('+p.type+')' : ''}</td></tr>`;
-      }
-      list.innerHTML = `<table class="w-full text-xs"><thead><tr class="bg-slate-50 border-b text-[10px] uppercase font-bold"><th class="p-2">Qty</th><th class="p-2 text-right">Len</th></tr></thead><tbody>${rows}</tbody></table>`;
-      updateSummary();
-    }
 
     function addSection() { 
       const first = sections[0], s = { id: Date.now(), name: String.fromCharCode(65 + sections.length), pitch: first.pitch, ridge: '', eave: '', height: '', profile: first.profile, coverage: first.coverage, eaveFold: first.eaveFold, config: 'right', hasDormer: false, dormer: { left:0, width:0, bottom:0, top:0 }, topAgainstWall:false, leftAgainstWall:false, rightAgainstWall:false }; 
@@ -367,7 +361,7 @@
 
     function renderSection(s) {
       const div = document.createElement('div');
-      div.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden";
+      div.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8";
       div.id = `section-${s.id}`;
       div.innerHTML = `
         <div class="p-4 md:p-6 bg-slate-50 border-b flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
@@ -398,7 +392,7 @@
             <div><label class="text-[10px] font-black uppercase text-slate-400">Angle</label><select class="input-field" onchange="updateVal(${s.id}, 'config', this.value)"><option value="right" ${s.config==='right'?'selected':''}>Right</option><option value="left" ${s.config==='left'?'selected':''}>Left</option><option value="both" ${s.config==='both'?'selected':''}>Both</option></select></div>
           </div>
           <div class="grid lg:grid-cols-4 gap-4 print-grid">
-            <div class="lg:col-span-3 bg-slate-50 rounded-xl p-2 border flex items-center justify-center min-h-[200px]"><svg id="svg-${s.id}" viewBox="0 0 800 300" class="w-full h-auto"></svg></div>
+            <div class="lg:col-span-3 bg-slate-50 rounded-xl p-2 border flex items-center justify-center min-h-[300px]"><svg id="svg-${s.id}" viewBox="0 0 800 300" class="w-full h-auto"></svg></div>
             <div id="list-${s.id}" class="border rounded-xl bg-white overflow-hidden"></div>
           </div>
         </div>`;
