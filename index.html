@@ -104,11 +104,11 @@
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
       <div class="p-4 border-b bg-slate-50 flex justify-between items-center"><h3 class="font-bold">Dormer Settings</h3><button onclick="closeDormerModal()">×</button></div>
       <div class="p-6 space-y-4">
-        <div><label class="text-[10px] font-bold text-slate-500 uppercase">Left to Dormer (In)</label><input type="number" id="m-dormer-left" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
-        <div><label class="text-[10px] font-bold text-slate-500 uppercase">Width (In)</label><input type="number" id="m-dormer-width" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
+        <div><label class="text-[10px] font-bold">Left to Dormer (In)</label><input type="number" id="m-dormer-left" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
+        <div><label class="text-[10px] font-bold">Width (In)</label><input type="number" id="m-dormer-width" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
         <div class="grid grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-slate-500 uppercase">Eave to Dormer</label><input type="number" id="m-dormer-bottom" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
-          <div><label class="text-[10px] font-bold text-slate-500 uppercase">Ridge to Dormer</label><input type="number" id="m-dormer-top" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
+          <div><label class="text-[10px] font-bold">Eave to Dormer</label><input type="number" id="m-dormer-bottom" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
+          <div><label class="text-[10px] font-bold">Ridge to Dormer</label><input type="number" id="m-dormer-top" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
         </div>
       </div>
       <div class="p-4 bg-slate-50 text-right"><button onclick="closeDormerModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Save</button></div>
@@ -127,6 +127,7 @@
         <h4>Section Setup</h4>
         <p>Each roof plane should be entered as a separate section (A, B, C, etc.).</p>
         <ul>
+          <li><strong>Section Names:</strong> Click on the section letter (e.g., "A") to edit the name for better clarity (e.g., "Front Porch").</li>
           <li><strong>Profile:</strong> Choose your panel style in Section A. All sections sync to this profile.</li>
           <li><strong>Pitch:</strong> vertical rise over a 12" run.</li>
           <li><strong>Angle Type:</strong> 
@@ -161,7 +162,8 @@
           <li><strong>Ridge to Dormer:</strong> Run from ridge down to dormer peak.</li>
         </ul>
 
-        <p class="mt-6 pt-4 border-t font-bold text-slate-900">Need help? Email our experts at: <a href="mailto:info@smsupply.ca" class="text-blue-600 underline">info@smsupply.ca</a></p>
+        <p class="mt-6 pt-4 border-t font-medium text-slate-700 italic">We are constantly improving our calculator. If you have specific ideas for improvements or new features, please let us know.</p>
+        <p class="mt-2 font-bold text-slate-900">Contact: <a href="mailto:info@smsupply.ca" class="text-blue-600 underline">info@smsupply.ca</a></p>
       </div>
       <div class="p-4 bg-slate-50 text-right"><button onclick="closeHowToUse()" class="bg-slate-800 text-white px-8 py-2 rounded-xl font-semibold">Got it</button></div>
     </div>
@@ -302,6 +304,8 @@
       sections.forEach(renderSection);
     } else { addSection(); }
     document.getElementById('print-date').textContent = new Date().toLocaleDateString();
+    
+    // ENSURE ICONS ARE CREATED FOR WEBSITE LINK
     lucide.createIcons();
   </script>
 </body>
