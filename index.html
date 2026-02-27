@@ -26,6 +26,12 @@
     .print-only { display: none; }
     @media print { .no-print { display: none !important; } .print-only { display: block !important; } #summary-container { page-break-after: always; break-after: page; } .pitch-suffix-print { display: inline !important; font-weight: bold; } }
     .modal-overlay { background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); }
+    
+    /* Formatting for the help text */
+    .how-to-content h4 { color: #1e40af; font-weight: 800; margin-top: 1.5rem; margin-bottom: 0.5rem; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
+    .how-to-content p { margin-bottom: 0.75rem; color: #334155; }
+    .how-to-content ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 1rem; color: #475569; }
+    .how-to-content li { margin-bottom: 0.4rem; }
   </style>
 </head>
 <body class="min-h-screen bg-slate-50 p-2 md:p-8">
@@ -54,7 +60,9 @@
         </div>
       </div>
       <div class="flex items-center gap-2 no-print flex-wrap">
-        <button onclick="showHowToUse()" class="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-xl text-sm font-semibold">Help</button>
+        <button onclick="showHowToUse()" class="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2">
+          <i data-lucide="help-circle" class="w-4 h-4"></i> How to Use
+        </button>
         <button onclick="validateAndSave()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-semibold">Save</button>
         <button onclick="sendToOffice()" class="bg-violet-600 text-white px-4 py-2 rounded-xl text-sm font-semibold">Send to Office</button>
         <button onclick="window.print()" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-semibold">Print/PDF</button>
@@ -90,7 +98,7 @@
   </div>
 
   <div id="dormer-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-overlay">
-    <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
       <div class="p-4 border-b bg-slate-50 flex justify-between items-center"><h3 class="font-bold">Dormer Settings</h3><button onclick="closeDormerModal()">×</button></div>
       <div class="p-6 space-y-4">
         <div><label class="text-[10px] font-bold">Left to Dormer (In)</label><input type="number" id="m-dormer-left" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
@@ -105,14 +113,60 @@
   </div>
 
   <div id="howto-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-overlay">
-    <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
-      <div class="p-6 border-b bg-slate-50 flex justify-between items-center"><h3 class="font-bold">How to Use</h3><button onclick="closeHowToUse()">×</button></div>
-      <div class="p-6 overflow-auto max-h-[calc(90vh-130px)] text-sm space-y-4">
-        <p>1. Choose panel profile in Section A. All sections will match.</p>
-        <p>2. For Standing Seam, enter Fold. For others, enter Overhang.</p>
-        <p>3. Use "Wall" checkboxes for flashing replacement.</p>
-        <p>4. <b>Note:</b> We carry many more trims than listed here. This tool covers the basics.</p>
+    <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <div class="p-6 border-b bg-slate-50 flex justify-between items-center">
+        <h3 class="font-bold text-xl flex items-center gap-2"><i data-lucide="help-circle" class="text-blue-600"></i> How to Use the Calculator</h3>
+        <button onclick="closeHowToUse()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">×</button>
       </div>
+      <div class="p-6 md:p-8 overflow-auto max-h-[calc(90vh-130px)] how-to-content text-sm">
+        <p>Welcome to the Summit Metal Supply Roof Calculator. This tool is designed to provide professional estimates for metal roofing panels and trims. For accuracy, please follow the measurement guidelines below.</p>
+        
+        <h4>Section Setup</h4>
+        <p>Each individual roof plane (face) should be entered as a separate section (A, B, C, etc.).</p>
+        <ul>
+          <li><strong>Profile:</strong> Choose your panel style in Section A. All other sections will automatically sync to this profile for consistency.</li>
+          <li><strong>Pitch:</strong> Enter the vertical rise over a 12" run. This ensures the panel geometry matches your actual roof slope.</li>
+          <li><strong>Angle Type:</strong> 
+            <ul>
+              <li><em>Right/Left Angle:</em> One side is straight up (square), the other is angled.</li>
+              <li><em>Both/Centered:</em> A standard centered gable section where both sides are angled.</li>
+            </ul>
+          </li>
+        </ul>
+
+        <h4>Primary Measurements (Inches)</h4>
+        <ul>
+          <li><strong>Ridge:</strong> The measurement across the very top of the roof section.</li>
+          <li><strong>Eave:</strong> The measurement across the bottom edge where the gutter would sit.</li>
+          <li><strong>Height:</strong> The flat-down distance from the ridge to the eave (not the slope length). The calculator uses this and the pitch to find the actual panel lengths.</li>
+          <li><strong>Fold/Overhang:</strong> 
+            <ul>
+              <li>For <em>Mechanical Standing Seam</em>, enter the inches needed for the eave fold.</li>
+              <li>For <em>Tuff or Diamond Rib</em>, enter the inches you want the panels to overhang the eave.</li>
+            </ul>
+          </li>
+        </ul>
+
+        <h4>Wall Flashing & Specialized Trims</h4>
+        <p>Checking a "Wall" box tells the calculator that the roof edge meets a vertical wall rather than an open edge.</p>
+        <ul>
+          <li><strong>Top wall:</strong> Replaces Ridge Cap with End-Wall Flashing.</li>
+          <li><strong>Side wall:</strong> Replaces Gable Trim or Valleys with Side-Wall Flashing for that specific side.</li>
+          <li><strong>Note:</strong> We stock many more trims than listed here. This tool covers standard configurations; contact us for custom flashing needs.</li>
+        </ul>
+
+        <h4>Dormer Entry</h4>
+        <p>When a dormer exists within a section, toggle the "Dormer" checkbox. <strong>Always measure from the far-left edge of the current roof section</strong> to locate the dormer start.</p>
+        <ul>
+          <li><strong>Left to Dormer:</strong> Distance from the left section edge to the start of the dormer base.</li>
+          <li><strong>Width:</strong> The full span of the dormer at its base.</li>
+          <li><strong>Eave to Dormer:</strong> The distance panels run from the eave up to the bottom of the dormer.</li>
+          <li><strong>Ridge to Dormer:</strong> The distance panels run from the ridge down to the dormer peak.</li>
+        </ul>
+
+        <p class="mt-6 pt-4 border-t font-bold text-slate-900">Need help? Email our experts at: <a href="mailto:info@smsupply.ca" class="text-blue-600 underline">info@smsupply.ca</a></p>
+      </div>
+      <div class="p-4 bg-slate-50 text-right"><button onclick="closeHowToUse()" class="bg-slate-800 text-white px-8 py-2 rounded-xl font-semibold">Got it</button></div>
     </div>
   </div>
 
@@ -130,31 +184,17 @@
       const cov = parseFloat(s.coverage)||0, r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0, h = parseFloat(s.height)||0, fold = parseFloat(s.eaveFold)||0;
       if (cov <= 0 || (r <= 0 && e <= 0)) return null;
       const totalP = Math.ceil(Math.max(r, e) / cov), data = [];
-      const hDiff = Math.abs(r - e);
-      const slope = hDiff > 0 ? h / hDiff : 0;
-
+      const hDiff = Math.abs(r - e), slope = hDiff > 0 ? h / hDiff : 0;
       for (let i = 0; i < totalP; i++) {
         const start = i * cov, end = (i+1) * cov;
         let base = start < Math.min(r,e) ? h : h - ((start - Math.min(r,e)) * slope);
-        
         if (s.hasDormer) {
           const d = s.dormer, dR = d.left + d.width;
           if (start >= d.left && end <= dR) {
-            // Under Dormer stays the same (flat cut)
             data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: start });
-            
-            const pH = h - d.bottom - d.top;
-            const mid = d.left + d.width / 2;
-            
-            // Helper to get dormer triangle height at any X
+            const pH = h - d.bottom - d.top, mid = d.left + d.width / 2;
             const getDH = (x) => Math.max(0, pH * (1 - Math.abs(x - mid) / (d.width / 2)));
-            
-            // MATH FIX: Get the SHORTEST dormer height within panel width 
-            // (Shortest dormer height = longest roof panel length)
-            const dormerHeightAtStart = getDH(start);
-            const dormerHeightAtEnd = getDH(end);
-            const minDormerHeight = Math.min(dormerHeightAtStart, dormerHeightAtEnd);
-            
+            const minDormerHeight = Math.min(getDH(start), getDH(end));
             data.push({ len: Math.ceil(d.top + (pH - minDormerHeight)), type: 'over', xPos: start });
             continue;
           }
@@ -215,7 +255,6 @@
       if (!res) return;
       const w = 800, h = 300, m = 50, scale = (w-2*m)/res.maxW, hScale = (h-2*m)/(parseFloat(s.height)||1), rW = (parseFloat(s.ridge)||0)*scale, eW = (parseFloat(s.eave)||0)*scale;
       let rX, eX; if (s.config === 'left') { rX = m + (w-2*m) - rW; eX = m + (w-2*m) - eW; } else if (s.config === 'right') { rX = m; eX = m; } else { rX = m + (w-2*m-rW)/2; eX = m + (w-2*m-eW)/2; }
-      
       let pLines = '', pLabels = '', pStep = res.coverage * scale;
       res.panelData.forEach((p) => {
         let x = (s.config === 'left') ? (eX + eW) - (p.xPos * scale) : Math.min(eX, rX) + (p.xPos * scale);
@@ -225,10 +264,8 @@
         if (p.type === 'over') lY = m + (p.len * hScale / 2);
         pLabels += `<g><rect x="${lX-12}" y="${lY-8}" width="24" height="16" fill="white" fill-opacity="0.95" rx="4"/><text x="${lX}" y="${lY+5}" font-size="10" font-weight="black" fill="${p.type==='standard'?'#1e40af':'#ef4444'}" text-anchor="middle">${p.len}</text></g>`;
       });
-
       let dSvg = ''; if (s.hasDormer) { const dX = eX + s.dormer.left*scale, dY = (h-m) - s.dormer.bottom*hScale, dW = s.dormer.width*scale; dSvg = `<polygon points="${dX},${dY} ${dX+dW},${dY} ${dX+dW/2},${m+s.dormer.top*hScale}" fill="white" stroke="red" stroke-width="2" stroke-dasharray="4"/>`; }
       svg.innerHTML = `<polygon points="${eX},${h-m} ${eX+eW},${h-m} ${rX+rW},${m} ${rX},${m}" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>${pLines}${dSvg}${pLabels}`;
-      
       let rows = '', idx = 0; while (idx < res.panelData.length) { let start = idx, p = res.panelData[idx]; while (idx < res.panelData.length && res.panelData[idx].len === p.len && res.panelData[idx].type === p.type) idx++; rows += `<tr class="border-b"><td class="p-2 text-center">${idx - start}</td><td class="p-2 text-right font-bold text-blue-700">${p.len}"${p.type !== 'standard' ? ' ('+p.type+')' : ''}</td></tr>`; }
       list.innerHTML = `<table class="w-full text-xs"><thead><tr class="bg-slate-50 border-b text-[10px] uppercase font-bold"><th class="p-2">Qty</th><th class="p-2 text-right">Len</th></tr></thead><tbody>${rows}</tbody></table>`;
       updateSummary();
@@ -238,10 +275,8 @@
       const nextL = String.fromCharCode(65 + sections.length);
       const first = sections[0] || { pitch: 4, profile: 'tuff', coverage: 36, eaveFold: '' };
       const s = { id: Date.now(), name: nextL, pitch: first.pitch, ridge: '', eave: '', height: '', profile: first.profile, coverage: first.coverage, eaveFold: first.eaveFold, config: 'right', hasDormer: false, dormer: { left:0, width:0, bottom:0, top:0 }, topAgainstWall:false, leftAgainstWall:false, rightAgainstWall:false }; 
-      sections.push(s); 
-      renderSection(s); 
+      sections.push(s); renderSection(s); 
     }
-
     function validateAndSave() { if (!projectName.trim()) { alert("Please enter a Project Name."); return; } saveProjectAsHTML(); }
     function saveProjectAsHTML() { const data = `<script id="__saved_data__"> window.__SAVED_PROJECT__ = ${JSON.stringify({ projectName, sections })}; <\/script>`; const blob = new Blob([document.documentElement.outerHTML.replace('</head>', data + '</head>')], { type: 'text/html' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${projectName.replace(/[^a-z0-9]/gi, '_')}.html`; a.click(); }
     function sendToOffice() { if (!projectName.trim()) { alert("Please enter a Project Name."); return; } saveProjectAsHTML(); const body = encodeURIComponent(`Project: ${projectName}\n\nPlease attach the downloaded .html and PDF files.`); window.addEventListener('afterprint', () => { setTimeout(() => { window.location.href = `mailto:info@smsupply.ca?subject=Calculator: ${projectName}&body=${body}`; }, 500); }, { once: true }); window.print(); }
@@ -250,7 +285,7 @@
     function updateVal(id, f, val) { sections.find(x => x.id === id)[f] = val; updateUI(id); }
     function updateProfile(id, val) { const s = sections.find(x => x.id === id); s.profile = val; s.coverage = (val === 'mechanical') ? 15.75 : 36; updateUI(id); }
     function toggleDormer(id, chk) { const s = sections.find(x => x.id === id); s.hasDormer = chk; if (chk) openDormerModal(id); else updateUI(id); }
-    function openDormerModal(id) { activeDormerId = id; const s = sections.find(x => x.id === id); document.getElementById('m-dormer-left').value = ''; document.getElementById('m-dormer-width').value = ''; document.getElementById('m-dormer-bottom').value = ''; document.getElementById('m-dormer-top').value = ''; document.getElementById('dormer-modal').classList.remove('hidden'); }
+    function openDormerModal(id) { activeDormerId = id; document.getElementById('m-dormer-left').value = ''; document.getElementById('m-dormer-width').value = ''; document.getElementById('m-dormer-bottom').value = ''; document.getElementById('m-dormer-top').value = ''; document.getElementById('dormer-modal').classList.remove('hidden'); }
     function closeDormerModal() { document.getElementById('dormer-modal').classList.add('hidden'); updateUI(activeDormerId); }
     function saveDormerData() { const s = sections.find(x => x.id === activeDormerId); s.dormer = { left: parseFloat(document.getElementById('m-dormer-left').value)||0, width: parseFloat(document.getElementById('m-dormer-width').value)||0, bottom: parseFloat(document.getElementById('m-dormer-bottom').value)||0, top: parseFloat(document.getElementById('m-dormer-top').value)||0 }; }
     function toggleWall(id, f, chk) { sections.find(x => x.id === id)[f] = chk; updateSummary(); }
