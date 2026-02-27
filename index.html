@@ -104,11 +104,11 @@
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
       <div class="p-4 border-b bg-slate-50 flex justify-between items-center"><h3 class="font-bold">Dormer Settings</h3><button onclick="closeDormerModal()">×</button></div>
       <div class="p-6 space-y-4">
-        <div><label class="text-[10px] font-bold">Left to Dormer (In)</label><input type="number" id="m-dormer-left" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
-        <div><label class="text-[10px] font-bold">Width (In)</label><input type="number" id="m-dormer-width" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
+        <div><label class="text-[10px] font-bold text-slate-500 uppercase">Left to Dormer (In)</label><input type="number" id="m-dormer-left" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
+        <div><label class="text-[10px] font-bold text-slate-500 uppercase">Width (In)</label><input type="number" id="m-dormer-width" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
         <div class="grid grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold">Eave to Dormer</label><input type="number" id="m-dormer-bottom" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
-          <div><label class="text-[10px] font-bold">Ridge to Dormer</label><input type="number" id="m-dormer-top" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
+          <div><label class="text-[10px] font-bold text-slate-500 uppercase">Eave to Dormer</label><input type="number" id="m-dormer-bottom" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
+          <div><label class="text-[10px] font-bold text-slate-500 uppercase">Ridge to Dormer</label><input type="number" id="m-dormer-top" class="input-field mt-1" oninput="saveDormerData()" placeholder="inches"></div>
         </div>
       </div>
       <div class="p-4 bg-slate-50 text-right"><button onclick="closeDormerModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Save</button></div>
@@ -265,7 +265,14 @@
       });
       let dSvg = ''; if (s.hasDormer) { const dX = eX + s.dormer.left*scale, dY = (h-m) - s.dormer.bottom*hScale, dW = s.dormer.width*scale; dSvg = `<polygon points="${dX},${dY} ${dX+dW},${dY} ${dX+dW/2},${m+s.dormer.top*hScale}" fill="white" stroke="red" stroke-width="2" stroke-dasharray="4"/>`; }
       svg.innerHTML = `<polygon points="${eX},${h-m} ${eX+eW},${h-m} ${rX+rW},${m} ${rX},${m}" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>${pLines}${dSvg}${pLabels}`;
-      let rows = '', idx = 0; while (idx < res.panelData.length) { let start = idx, p = res.panelData[idx]; while (idx < res.panelData.length && res.panelData[idx].len === p.len && res.panelData[idx].type === p.type) idx++; rows += `<tr class="border-b"><td class="p-2 text-center">${idx - start}</td><td class="p-2 text-right font-bold text-blue-700">${p.len}"${p.type !== 'standard' ? ' ('+p.type+')' : ''}</td></tr>`; }
+      
+      let summaryMap = [];
+      res.panelData.forEach(p => {
+          let existing = summaryMap.find(item => item.len === p.len && item.type === p.type);
+          if (existing) existing.count++;
+          else summaryMap.push({ len: p.len, type: p.type, count: 1 });
+      });
+      let rows = summaryMap.map(item => `<tr class="border-b"><td class="p-2 text-center text-slate-500 font-medium">${item.count}</td><td class="p-2 text-right font-bold text-blue-700">${item.len}"${item.type !== 'standard' ? ' ('+item.type+')' : ''}</td></tr>`).join('');
       list.innerHTML = `<table class="w-full text-xs"><thead><tr class="bg-slate-50 border-b text-[10px] uppercase font-bold"><th class="p-2">Qty</th><th class="p-2 text-right">Len</th></tr></thead><tbody>${rows}</tbody></table>`;
       updateSummary();
     }
@@ -278,7 +285,7 @@
     }
     function validateAndSave() { if (!projectName.trim()) { alert("Please enter a Project Name."); return; } saveProjectAsHTML(); }
     function saveProjectAsHTML() { const data = `<script id="__saved_data__"> window.__SAVED_PROJECT__ = ${JSON.stringify({ projectName, sections })}; <\/script>`; const blob = new Blob([document.documentElement.outerHTML.replace('</head>', data + '</head>')], { type: 'text/html' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${projectName.replace(/[^a-z0-9]/gi, '_')}.html`; a.click(); }
-    function sendToOffice() { if (!projectName.trim()) { alert("Please enter a Project Name."); return; } saveProjectAsHTML(); const body = encodeURIComponent(`Project: ${projectName}\n\nPlease attach the downloaded .html and PDF files.`); window.addEventListener('afterprint', () => { setTimeout(() => { window.location.href = `mailto:info@smsupply.ca?subject=Calculator: ${projectName}&body=${body}`; }, 500); }, { once: true }); window.print(); }
+    function sendToOffice() { if (!projectName.trim()) { alert("Please enter a Project Name."); return; } saveProjectAsHTML(); const body = encodeURIComponent(`Project: ${projectName}\n\nPlease attach the downloaded files.`); window.addEventListener('afterprint', () => { setTimeout(() => { window.location.href = `mailto:info@smsupply.ca?subject=Calculator: ${projectName}&body=${body}`; }, 500); }, { once: true }); window.print(); }
     function removeSection(id) { if (sections.length > 1) { sections = sections.filter(x => x.id !== id); document.getElementById(`section-${id}`).remove(); updateSummary(); } }
     function updatePitch(id, val) { sections.find(x => x.id === id).pitch = parseFloat(val)||4; updateUI(id); }
     function updateVal(id, f, val) { sections.find(x => x.id === id)[f] = val; updateUI(id); }
@@ -304,8 +311,6 @@
       sections.forEach(renderSection);
     } else { addSection(); }
     document.getElementById('print-date').textContent = new Date().toLocaleDateString();
-    
-    // ENSURE ICONS ARE CREATED FOR WEBSITE LINK
     lucide.createIcons();
   </script>
 </body>
