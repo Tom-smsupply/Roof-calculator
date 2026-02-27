@@ -2,16 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Summit Metal Supply Roof Calculator</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="logo.png">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@latest/font/lucide.css"/>
+  
   <style>
-    body { font-family: 'Inter', system-ui, sans-serif; }
+    body { font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; }
     input[type="number"]::-webkit-inner-spin-button,
     input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    
     .input-field { border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.5rem 0.75rem; width: 100%; transition: all 0.2s; }
     .input-field:focus { border-color: #3b82f6; outline: 2px solid #dbeafe; }
+    
     .section-label { 
       background: white; 
       border: 3px solid #1e40af; 
@@ -21,187 +31,135 @@
       letter-spacing: -2px;
       padding: 14px 32px;
       border-radius: 9999px;
-      min-width: 220px;
+      min-width: 180px;
       text-align: center;
-      transition: all 0.2s;
     }
-    .section-label:focus { 
-      border-color: #3b82f6; 
-      box-shadow: 0 0 0 6px rgb(59 130 246 / 0.3);
-      outline: none;
+
+    /* Mobile Specific Fixes */
+    @media (max-width: 768px) {
+      .section-label {
+        font-size: 1.5rem;
+        padding: 8px 20px;
+        min-width: 100px;
+      }
+      svg, table { max-width: 100% !important; height: auto; }
     }
+
     .print-only { display: none; }
     @media print { 
       .no-print { display: none !important; }
       .print-only { display: block !important; }
       span.print-only { display: inline !important; }
-      .dormer-modal, .howto-modal { display: none !important; }
-      .section-label { border-width: 2px; box-shadow: none; }
-      body { background: white !important; }
-
-      #summary-container {
-        page-break-after: always;
-        break-after: page;
-      }
-
-      #sections-container [id^="list-"] {
-        max-height: none !important;
-        overflow: visible !important;
-      }
-
-      #sections-container > div {
-        page-break-inside: avoid;
-        break-inside: avoid;
-      }
-
-      .print-grid {
-        display: block !important;
-      }
-      .print-grid > * {
-        width: 100% !important;
-        margin-bottom: 1rem;
-      }
-
-      #summary-container { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      
-      .pitch-suffix-print {
-        display: inline !important;
-        font-weight: bold;
-      }
+      #summary-container { page-break-after: always; break-after: page; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      #sections-container [id^="list-"] { max-height: none !important; overflow: visible !important; }
+      #sections-container > div { page-break-inside: avoid; break-inside: avoid; }
+      .print-grid { display: block !important; }
+      .print-grid > * { width: 100% !important; margin-bottom: 1rem; }
+      .pitch-suffix-print { display: inline !important; font-weight: bold; }
     }
     .modal-overlay { background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); }
   </style>
 </head>
-<body class="min-h-screen bg-slate-50 p-4 md:p-8">
+<body class="min-h-screen bg-slate-50 p-2 md:p-8">
   <div class="max-w-7xl mx-auto">
     
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-6">
       <div class="flex-1">
-        <div class="text-blue-700 text-4xl font-extrabold tracking-[-2px] mb-1">SUMMIT METAL SUPPLY</div>
-        <h1 class="text-3xl font-bold text-slate-900 flex items-center gap-3">
-          Roof Calculator
-        </h1>
-        <div class="mt-3 flex items-center gap-3">
+        <div class="text-blue-700 text-3xl md:text-4xl font-extrabold tracking-[-2px] mb-1">SUMMIT METAL SUPPLY</div>
+        <h1 class="text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-3">Roof Calculator</h1>
+        <div class="mt-3 flex flex-col md:flex-row md:items-center gap-3">
           <span class="font-semibold text-slate-600 whitespace-nowrap">Project Name:</span>
-          <input id="project-name" 
-                 type="text" 
-                 class="input-field max-w-md no-print" 
-                 placeholder="e.g. 123 Main St - Roof Replacement"
+          <input id="project-name" type="text" class="input-field max-w-md no-print" placeholder="e.g. 123 Main St - Jones"
                  oninput="projectName = this.value; document.getElementById('project-name-print').textContent = this.value; document.title = this.value || 'Summit Metal Supply Roof Calculator';">
           <span id="project-name-print" class="print-only text-xl font-bold text-slate-800"></span>
         </div>
         <div class="print-only mt-1 text-sm text-slate-500" id="print-date"></div>
       </div>
 
-      <div class="flex items-center gap-3 no-print flex-wrap">
-        <button onclick="showHowToUse()" 
-                class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-5 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm">
-          <i data-lucide="help-circle" class="w-5 h-5"></i>
-          <span class="font-semibold">How to Use</span>
+      <div class="flex items-center gap-2 no-print flex-wrap">
+        <button onclick="showHowToUse()" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-xl flex items-center gap-2 transition shadow-sm text-sm font-semibold">
+          <i data-lucide="help-circle" class="w-4 h-4"></i> Help
         </button>
-
-        <button onclick="validateAndSave()" 
-                class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm">
-          <i data-lucide="save" class="w-5 h-5"></i>
-          <span class="font-semibold">Save Project</span>
+        <button onclick="validateAndSave()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition shadow-sm text-sm font-semibold">
+          <i data-lucide="save" class="w-4 h-4"></i> Save
         </button>
-
-        <button onclick="sendToOffice()" 
-                class="bg-violet-600 hover:bg-violet-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm">
-          <i data-lucide="send" class="w-5 h-5"></i>
-          <span class="font-semibold">Send to Office</span>
+        <button onclick="sendToOffice()" class="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition shadow-sm text-sm font-semibold">
+          <i data-lucide="send" class="w-4 h-4"></i> Send to Office
         </button>
-
-        <button onclick="window.print()" 
-                class="bg-slate-800 hover:bg-slate-900 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 transition shadow-sm">
-          <i data-lucide="printer" class="w-5 h-5"></i>
-          <span class="font-semibold">Print / Save as PDF</span>
+        <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition shadow-sm text-sm font-semibold">
+          <i data-lucide="printer" class="w-4 h-4"></i> Print/PDF
         </button>
       </div>
     </div>
 
-    <div id="summary-container" class="mb-8 bg-blue-900 text-white rounded-xl p-6 shadow-lg border border-blue-800">
+    <div id="summary-container" class="mb-8 bg-blue-900 text-white rounded-xl p-4 md:p-6 shadow-lg border border-blue-800">
       <h2 class="text-xl font-bold flex items-center gap-2 mb-6">
         <i data-lucide="calculator" class="w-6 h-6 text-blue-300"></i> Project Totals
       </h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
-          <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-2">Total number of Panels</p>
-          <p id="total-panels" class="text-4xl font-bold">0</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-blue-800/40 p-4 rounded-lg border border-blue-700/50">
+          <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-1">Total Panels</p>
+          <p id="total-panels" class="text-3xl font-bold">0</p>
         </div>
-        <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
-          <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-2">Total linear feet</p>
-          <div class="flex items-baseline gap-2">
-            <p id="total-linear-ft" class="text-4xl font-bold">0.0</p>
-            <span class="text-blue-300 font-medium">ft</span>
-          </div>
+        <div class="bg-blue-800/40 p-4 rounded-lg border border-blue-700/50">
+          <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-1">Total Linear Feet</p>
+          <p class="text-3xl font-bold"><span id="total-linear-ft">0.0</span> <span class="text-blue-300 text-lg">ft</span></p>
         </div>
-        <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
-          <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-2">Total Square feet</p>
-          <div class="flex items-baseline gap-2">
-            <p id="total-sq-ft" class="text-4xl font-bold">0</p>
-            <span class="text-blue-300 font-medium">sq ft</span>
-          </div>
+        <div class="bg-blue-800/40 p-4 rounded-lg border border-blue-700/50">
+          <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-1">Total Square Feet</p>
+          <p class="text-3xl font-bold"><span id="total-sq-ft">0</span> <span class="text-blue-300 text-lg">sq ft</span></p>
         </div>
       </div>
 
-      <div class="mt-8 pt-6 border-t border-blue-800/30">
+      <div class="mt-6 pt-6 border-t border-blue-800/30">
         <h3 class="uppercase text-blue-300 text-sm font-black tracking-widest mb-4 flex items-center gap-2">
           <i data-lucide="package" class="w-5 h-5"></i> Trims & Fasteners
         </h3>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
-            <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-1">Ridge Caps</p>
-            <p id="ridge-caps" class="text-4xl font-bold">0</p>
-            <p class="text-blue-300 text-xs">120" pcs</p>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div class="bg-blue-800/40 p-3 rounded-lg border border-blue-700/50">
+            <p class="text-blue-200 text-[10px] font-black uppercase mb-1">Ridge Caps</p>
+            <p id="ridge-caps" class="text-2xl font-bold">0</p>
+            <p class="text-blue-300 text-[10px]">120" pcs</p>
           </div>
-          <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
-            <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-1">Eave Trims</p>
-            <p id="eave-trims" class="text-4xl font-bold">0</p>
-            <p class="text-blue-300 text-xs">120" pcs</p>
+          <div class="bg-blue-800/40 p-3 rounded-lg border border-blue-700/50">
+            <p class="text-blue-200 text-[10px] font-black uppercase mb-1">Eave Trims</p>
+            <p id="eave-trims" class="text-2xl font-bold">0</p>
+            <p class="text-blue-300 text-[10px]">120" pcs</p>
           </div>
-          <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
-            <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-1">Valley Flashing</p>
-            <p id="valley-flashing" class="text-4xl font-bold">0</p>
-            <p class="text-blue-300 text-xs">120" pcs</p>
+          <div class="bg-blue-800/40 p-3 rounded-lg border border-blue-700/50">
+            <p class="text-blue-200 text-[10px] font-black uppercase mb-1">Valley Flashing</p>
+            <p id="valley-flashing" class="text-2xl font-bold">0</p>
+            <p class="text-blue-300 text-[10px]">120" pcs</p>
           </div>
-          <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
-            <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-1">Hip Caps</p>
-            <p id="hip-caps" class="text-4xl font-bold">0</p>
-            <p class="text-blue-300 text-xs">120" pcs</p>
+          <div class="bg-blue-800/40 p-3 rounded-lg border border-blue-700/50">
+            <p class="text-blue-200 text-[10px] font-black uppercase mb-1">Hip Caps</p>
+            <p id="hip-caps" class="text-2xl font-bold">0</p>
+            <p class="text-blue-300 text-[10px]">120" pcs</p>
           </div>
-          <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
-            <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-1">Gable Trim</p>
-            <p id="gable-trim" class="text-4xl font-bold">0</p>
-            <p class="text-blue-300 text-xs">120" pcs</p>
+          <div class="bg-blue-800/40 p-3 rounded-lg border border-blue-700/50">
+            <p class="text-blue-200 text-[10px] font-black uppercase mb-1">Gable Trim</p>
+            <p id="gable-trim" class="text-2xl font-bold">0</p>
+            <p class="text-blue-300 text-[10px]">120" pcs</p>
           </div>
-          <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
-            <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-1">Screws</p>
-            <p id="total-screws" class="text-4xl font-bold">0</p>
-            <p class="text-blue-300 text-xs">Mech: 1 per 1.25 sq ft | Others: 1 per sq ft</p>
+          <div class="bg-blue-800/40 p-3 rounded-lg border border-blue-700/50">
+            <p class="text-blue-200 text-[10px] font-black uppercase mb-1">Screws</p>
+            <p id="total-screws" class="text-2xl font-bold">0</p>
           </div>
-          <div class="bg-blue-800/40 p-5 rounded-lg border border-blue-700/50">
-            <p class="text-blue-200 text-xs font-black uppercase tracking-wider mb-1">Clip Fasteners</p>
-            <p id="clip-fasteners" class="text-4xl font-bold">0</p>
-            <p class="text-blue-300 text-xs">Mech Seam only (1 per 1.25 sq ft)</p>
+          <div id="end-wall-tile" class="bg-amber-700/60 p-3 rounded-lg border border-amber-500/50" style="display:none">
+            <p class="text-amber-200 text-[10px] font-black uppercase mb-1">End Wall Flash</p>
+            <p id="end-wall-flashing" class="text-2xl font-bold">0</p>
           </div>
-          <div id="end-wall-tile" class="bg-amber-700/60 p-5 rounded-lg border border-amber-500/50" style="display:none">
-            <p class="text-amber-200 text-xs font-black uppercase tracking-wider mb-1">End Wall Flashing</p>
-            <p id="end-wall-flashing" class="text-4xl font-bold">0</p>
-            <p class="text-amber-300 text-xs">120" pcs (top against wall)</p>
-          </div>
-          <div id="side-wall-tile" class="bg-amber-700/60 p-5 rounded-lg border border-amber-500/50" style="display:none">
-            <p class="text-amber-200 text-xs font-black uppercase tracking-wider mb-1">Side Wall Flashing</p>
-            <p id="side-wall-flashing" class="text-4xl font-bold">0</p>
-            <p class="text-amber-300 text-xs">120" pcs (side against wall)</p>
+          <div id="side-wall-tile" class="bg-amber-700/60 p-3 rounded-lg border border-amber-500/50" style="display:none">
+            <p class="text-amber-200 text-[10px] font-black uppercase mb-1">Side Wall Flash</p>
+            <p id="side-wall-flashing" class="text-2xl font-bold">0</p>
           </div>
         </div>
       </div>
     </div>
 
-    <div id="sections-container" class="space-y-8"></div>
-    <div class="mt-8 flex justify-center no-print">
-      <button onclick="addSection()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-bold transition flex items-center gap-2 shadow-lg text-lg">
+    <div id="sections-container" class="space-y-6"></div>
+    <div class="mt-8 mb-12 flex justify-center no-print">
+      <button onclick="addSection()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-bold transition flex items-center gap-2 shadow-lg text-lg">
         <i data-lucide="plus" class="w-6 h-6"></i> Add Section
       </button>
     </div>
@@ -209,63 +167,40 @@
 
   <div id="dormer-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-overlay">
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
-      <div class="p-6 border-b bg-slate-50 flex justify-between items-center">
-        <h3 class="font-bold text-xl text-slate-800">Triangular Dormer Settings</h3>
+      <div class="p-4 border-b bg-slate-50 flex justify-between items-center">
+        <h3 class="font-bold text-lg">Triangular Dormer</h3>
         <button onclick="closeDormerModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
       </div>
       <div class="p-6 space-y-4">
-        <div>
-          <label class="text-xs font-bold text-slate-500 uppercase">Left Eave to Dormer Start (In)</label>
-          <input type="number" id="m-dormer-left" class="input-field mt-1" oninput="saveDormerData()">
-        </div>
-        <div>
-          <label class="text-xs font-bold text-slate-500 uppercase">Width of Dormer Base (In)</label>
-          <input type="number" id="m-dormer-width" class="input-field mt-1" oninput="saveDormerData()">
-        </div>
+        <div><label class="text-[10px] font-bold text-slate-500 uppercase">Left to Dormer Start (In)</label><input type="number" id="m-dormer-left" class="input-field mt-1" oninput="saveDormerData()"></div>
+        <div><label class="text-[10px] font-bold text-slate-500 uppercase">Width of Dormer (In)</label><input type="number" id="m-dormer-width" class="input-field mt-1" oninput="saveDormerData()"></div>
         <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase">Eave to Dormer (In)</label>
-            <input type="number" id="m-dormer-bottom" class="input-field mt-1" oninput="saveDormerData()">
-          </div>
-          <div>
-            <label class="text-xs font-bold text-slate-500 uppercase">Ridge to Dormer (In)</label>
-            <input type="number" id="m-dormer-top" class="input-field mt-1" oninput="saveDormerData()">
-          </div>
+          <div><label class="text-[10px] font-bold text-slate-500 uppercase">Eave to Dormer (In)</label><input type="number" id="m-dormer-bottom" class="input-field mt-1" oninput="saveDormerData()"></div>
+          <div><label class="text-[10px] font-bold text-slate-500 uppercase">Ridge to Dormer (In)</label><input type="number" id="m-dormer-top" class="input-field mt-1" oninput="saveDormerData()"></div>
         </div>
       </div>
-      <div class="p-6 bg-slate-50 text-right">
-        <button onclick="closeDormerModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Save Triangle</button>
-      </div>
+      <div class="p-4 bg-slate-50 text-right"><button onclick="closeDormerModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Save</button></div>
     </div>
   </div>
 
   <div id="howto-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-overlay">
-    <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
       <div class="p-6 border-b bg-slate-50 flex justify-between items-center">
-        <h3 class="font-bold text-2xl text-slate-800 flex items-center gap-3">
-          <i data-lucide="help-circle" class="w-8 h-8 text-blue-600"></i>
-          How to Use the Summit Metal Supply Roofing Calculator
-        </h3>
-        <button onclick="closeHowToUse()" class="text-slate-400 hover:text-slate-600 text-3xl leading-none">×</button>
+        <h3 class="font-bold text-xl flex items-center gap-2"><i data-lucide="help-circle" class="text-blue-600"></i> How to Use</h3>
+        <button onclick="closeHowToUse()" class="text-slate-400 hover:text-slate-600">×</button>
       </div>
-      <div class="p-8 overflow-auto max-h-[calc(90vh-120px)] prose prose-slate max-w-none text-[15px]">
-        <h4 class="text-xl font-semibold mb-4">Overview</h4>
-        <p>This program allows you to input measurements for each roof section individually. The section label defaults to A, B, C, but can be edited for clarity.</p>
-
-        <h4 class="text-xl font-semibold mt-8 mb-4">Entering Measurements</h4>
-        <ul class="list-disc pl-6 space-y-2">
-          <li>Choose the panel profile in the first section; all other sections will sync automatically.</li>
-          <li>For Standing Seam, enter the Fold allowance for the eave. For all other profiles, use this for the Overhang.</li>
-          <li>If a section is against a wall, use the "Against Wall" checkboxes to accurately swap Ridge Caps for End-Wall Flashing or Gable Trims for Side-Wall Flashing.</li>
-          <li><strong>Note:</strong> While this calculator generates quantities for the most common trims, Summit Metal Supply carries many more specialized trims for unique project needs.</li>
+      <div class="p-6 md:p-8 overflow-auto max-h-[calc(90vh-130px)] prose prose-slate max-w-none text-sm">
+        <p>This program allows you to input measurements for each roof section individually. Use the section labels (A, B, C) to organize your layout.</p>
+        <h4 class="mb-2">Instructions</h4>
+        <ul class="space-y-2">
+          <li>Choose your panel profile in the first section. All others will automatically match.</li>
+          <li>For Standing Seam, enter the <strong>Fold</strong> allowance. For other profiles, use this for <strong>Overhang</strong>.</li>
+          <li>If an edge is against a wall, use the "Wall" checkboxes. This automatically swaps standard trims for flashing.</li>
+          <li><strong>Note:</strong> We carry many more trims than shown here. This calculator lists only the most common project components.</li>
         </ul>
-
-        <h4 class="text-xl font-semibold mt-8 mb-4">Questions?</h4>
-        <p>If you have any questions please contact us at <a href="mailto:info@smsupply.ca" class="text-blue-600 underline hover:underline-offset-2">info@smsupply.ca</a></p>
+        <p class="mt-4 font-bold">Contact: <a href="mailto:info@smsupply.ca" class="text-blue-600">info@smsupply.ca</a></p>
       </div>
-      <div class="p-6 bg-slate-50 border-t text-right">
-        <button onclick="closeHowToUse()" class="bg-slate-800 text-white px-8 py-3 rounded-2xl font-semibold">Close</button>
-      </div>
+      <div class="p-4 bg-slate-50 text-right"><button onclick="closeHowToUse()" class="bg-slate-800 text-white px-8 py-2 rounded-xl font-semibold">Close</button></div>
     </div>
   </div>
 
@@ -273,352 +208,167 @@
   <script>
     let activeDormerId = null;
     let projectName = '';
+    let sections = [{ id: Date.now(), name: 'A', pitch: 4, ridge: '', eave: '', height: '', profile: 'tuff', coverage: 36, eaveFold: '', config: 'right', hasDormer: false, dormer: { left: 0, width: 0, bottom: 0, top: 0 }, topAgainstWall: false, leftAgainstWall: false, rightAgainstWall: false }];
 
-    let sections = [{
-      id: Date.now(),
-      name: 'A',
-      pitch: 4,
-      ridge: '', eave: '', height: '',
-      profile: 'tuff',
-      coverage: 36,
-      eaveFold: '', config: 'right',
-      hasDormer: false,
-      dormer: { left: 0, width: 0, bottom: 0, top: 0 },
-      topAgainstWall: false,
-      leftAgainstWall: false,
-      rightAgainstWall: false
-    }];
-
-    // --- LOGIC ---
     function calculate(s) {
-      const coverage = parseFloat(s.coverage) || 0;
-      const ridge = parseFloat(s.ridge) || 0;
-      const eave = parseFloat(s.eave) || 0;
-      const height = parseFloat(s.height) || 0;
-      const eaveFold = parseFloat(s.eaveFold) || 0;
-      if (coverage <= 0 || (ridge <= 0 && eave <= 0)) return null;
-
-      const maxW = Math.max(ridge, eave);
-      const minW = Math.min(ridge, eave);
-      const totalPanelsCount = Math.ceil(maxW / coverage);
-      const widthDiff = maxW - minW;
-      const dropPerInch = widthDiff > 0 ? (height / widthDiff) : 0;
-      const panelData = [];
-      let dormerUnders = [];
-      let dormerOvers = [];
-
-      for (let i = 0; i < totalPanelsCount; i++) {
-        const pStart = i * coverage;
-        const pEnd = (i + 1) * coverage;
-        let baseLen = pStart < minW ? height : height - ((pStart - minW) * dropPerInch);
-        let stdLen = Math.ceil(Math.max(0, baseLen + eaveFold));
-
+      const cov = parseFloat(s.coverage) || 0, r = parseFloat(s.ridge) || 0, e = parseFloat(s.eave) || 0, h = parseFloat(s.height) || 0, fold = parseFloat(s.eaveFold) || 0;
+      if (cov <= 0 || (r <= 0 && e <= 0)) return null;
+      const maxW = Math.max(r, e), minW = Math.min(r, e), totalP = Math.ceil(maxW / cov), diff = maxW - minW, drop = diff > 0 ? (h / diff) : 0;
+      const data = []; let dUnders = [], dOvers = [];
+      for (let i = 0; i < totalP; i++) {
+        const start = i * cov, end = (i + 1) * cov;
+        let base = start < minW ? h : h - ((start - minW) * drop);
         if (s.hasDormer) {
-          const d = s.dormer;
-          const dRight = d.left + d.width;
-          const fullyInDormer = (pStart >= d.left && pEnd <= dRight);
-
-          if (fullyInDormer) {
-            const underLen = Math.ceil(d.bottom + eaveFold);
-            dormerUnders.push({ len: underLen });
-            const halfWidth = d.width / 2;
-            const peakHeight = height - d.bottom - d.top;
-            const getDormerHeightAt = (x) => {
-              const distFromCenter = Math.abs(x - (d.left + halfWidth));
-              return Math.max(0, peakHeight * (1 - distFromCenter / halfWidth));
-            };
-            const dormerH1 = getDormerHeightAt(pStart);
-            const dormerH2 = getDormerHeightAt(pEnd);
-            const minDormerHeightInPanel = Math.min(dormerH1, dormerH2);
-            const topLen = Math.ceil(d.top + (peakHeight - minDormerHeightInPanel));
-            dormerOvers.push({ len: topLen });
+          const d = s.dormer, dR = d.left + d.width;
+          if (start >= d.left && end <= dR) {
+            dUnders.push({ len: Math.ceil(d.bottom + fold), type: 'under' });
+            const peakH = h - d.bottom - d.top;
+            const getDH = (x) => Math.max(0, peakH * (1 - Math.abs(x - (d.left + d.width/2)) / (d.width/2)));
+            dOvers.push({ len: Math.ceil(d.top + (peakH - Math.min(getDH(start), getDH(end)))), type: 'over' });
             continue;
           }
         }
-        panelData.push({ type: 'standard', len: stdLen });
+        data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard' });
       }
-
-      if (dormerUnders.length > 0) {
-        panelData.push(...dormerUnders.map(u => ({ type: 'under', ...u })));
-        panelData.push(...dormerOvers.map(o => ({ type: 'over', ...o })));
-      }
-      return { total: panelData.length, maxW, minW, panelData, coverage };
+      return { total: data.length + dUnders.length + dOvers.length, maxW, panelData: [...data, ...dUnders, ...dOvers], coverage: cov };
     }
 
     function updateSummary() {
-      let grandTotalPanels = 0, grandTotalInches = 0, grandTotalSqFt = 0;
-      let totalRidge = 0, totalEave = 0, totalValley = 0, totalHip = 0, totalGableTrimLength = 0;
-      let mechSqFt = 0, totalEndWallFlashingInches = 0, totalSideWallFlashingInches = 0;
-
+      let grandP = 0, grandIn = 0, grandSq = 0, tRidge = 0, tEave = 0, tVal = 0, tHip = 0, tGable = 0, tEndWall = 0, tSideWall = 0, mechSq = 0;
       sections.forEach(s => {
         const res = calculate(s);
         if (res) {
-          grandTotalPanels += res.panelData.length;
-          const sectionInches = res.panelData.reduce((sum, p) => sum + p.len, 0);
-          grandTotalInches += sectionInches;
-          const sectionSqFt = (sectionInches / 12) * (res.coverage / 12);
-          grandTotalSqFt += sectionSqFt;
-
-          const hVal = parseFloat(s.height) || 0;
-          const rVal = parseFloat(s.ridge) || 0;
-          const eVal = parseFloat(s.eave) || 0;
-          totalEave += eVal;
-
-          if (s.topAgainstWall) totalEndWallFlashingInches += rVal;
-          else totalRidge += rVal;
-
-          const hasAngle = Math.abs(rVal - eVal) > 0.001 && hVal > 0;
-          if (hasAngle) {
-            const diff = Math.abs(rVal - eVal);
-            const hyp = Math.sqrt(diff * diff + hVal * hVal);
-            const sideWalled = (s.config === 'right' && s.rightAgainstWall) || (s.config === 'left' && s.leftAgainstWall);
-
-            if (sideWalled) totalSideWallFlashingInches += hyp;
-            else {
-              if (rVal > eVal) totalValley += hyp;
-              else totalHip += hyp;
-            }
+          grandP += res.panelData.length;
+          const sIn = res.panelData.reduce((sum, p) => sum + p.len, 0);
+          grandIn += sIn; const sSq = (sIn / 12) * (res.coverage / 12); grandSq += sSq;
+          const h = parseFloat(s.height) || 0, r = parseFloat(s.ridge) || 0, e = parseFloat(s.eave) || 0;
+          tEave += e;
+          if (s.topAgainstWall) tEndWall += r; else tRidge += r;
+          if (Math.abs(r - e) > 0.001 && h > 0) {
+            const hyp = Math.sqrt(Math.pow(Math.abs(r - e), 2) + h*h);
+            if ((s.config === 'right' && s.rightAgainstWall) || (s.config === 'left' && s.leftAgainstWall)) tSideWall += hyp;
+            else { if (r > e) tVal += hyp; else tHip += hyp; }
           }
-
-          if (hVal > 0) {
+          if (h > 0) {
             if (s.config === 'both') {
-              if (!s.leftAgainstWall) totalGableTrimLength += hVal; else totalSideWallFlashingInches += hVal;
-              if (!s.rightAgainstWall) totalGableTrimLength += hVal; else totalSideWallFlashingInches += hVal;
+              if (!s.leftAgainstWall) tGable += h; else tSideWall += h;
+              if (!s.rightAgainstWall) tGable += h; else tSideWall += h;
             } else {
-              const sqWalled = (s.config === 'right' && s.leftAgainstWall) || (s.config === 'left' && s.rightAgainstWall);
-              if (sqWalled) totalSideWallFlashingInches += hVal; else totalGableTrimLength += hVal;
+              const sqW = (s.config === 'right' && s.leftAgainstWall) || (s.config === 'left' && s.rightAgainstWall);
+              if (sqW) tSideWall += h; else tGable += h;
             }
           }
-
           if (s.hasDormer) {
-            const dWidth = parseFloat(s.dormer.width) || 0;
-            const peakH = hVal - (parseFloat(s.dormer.bottom) || 0) - (parseFloat(s.dormer.top) || 0);
-            if (peakH > 0 && dWidth > 0) totalValley += 2 * Math.sqrt(Math.pow(dWidth / 2, 2) + Math.pow(peakH, 2));
+            const dW = parseFloat(s.dormer.width) || 0, pH = h - (parseFloat(s.dormer.bottom)||0) - (parseFloat(s.dormer.top)||0);
+            if (pH > 0 && dW > 0) tVal += 2 * Math.sqrt(Math.pow(dW/2, 2) + pH*pH);
           }
-          if (s.profile === 'mechanical') mechSqFt += sectionSqFt;
+          if (s.profile === 'mechanical') mechSq += sSq;
         }
       });
-
-      document.getElementById('total-panels').innerText = grandTotalPanels;
-      document.getElementById('total-linear-ft').innerText = (grandTotalInches / 12).toFixed(1);
-      document.getElementById('total-sq-ft').innerText = Math.ceil(grandTotalSqFt);
-
-      document.getElementById('ridge-caps').innerText = Math.ceil(totalRidge / 120 / 2);
-      document.getElementById('eave-trims').innerText = Math.ceil(totalEave / 120);
-      document.getElementById('valley-flashing').innerText = Math.ceil(totalValley / 120 / 2);
-      document.getElementById('hip-caps').innerText = Math.ceil(totalHip / 120 / 2);
-      document.getElementById('gable-trim').innerText = Math.ceil(totalGableTrimLength / 120);
-      document.getElementById('end-wall-flashing').innerText = Math.ceil(totalEndWallFlashingInches / 120);
-      document.getElementById('side-wall-flashing').innerText = Math.ceil(totalSideWallFlashingInches / 120);
-      
-      document.getElementById('total-screws').innerText = Math.ceil(mechSqFt > 0 ? grandTotalSqFt / 1.25 : grandTotalSqFt);
-      document.getElementById('clip-fasteners').innerText = Math.ceil(mechSqFt / 1.25);
-
-      document.getElementById('end-wall-tile').style.display = totalEndWallFlashingInches > 0 ? '' : 'none';
-      document.getElementById('side-wall-tile').style.display = totalSideWallFlashingInches > 0 ? '' : 'none';
+      document.getElementById('total-panels').innerText = grandP;
+      document.getElementById('total-linear-ft').innerText = (grandIn / 12).toFixed(1);
+      document.getElementById('total-sq-ft').innerText = Math.ceil(grandSq);
+      document.getElementById('ridge-caps').innerText = Math.ceil(tRidge / 240);
+      document.getElementById('eave-trims').innerText = Math.ceil(tEave / 120);
+      document.getElementById('valley-flashing').innerText = Math.ceil(tVal / 240);
+      document.getElementById('hip-caps').innerText = Math.ceil(tHip / 240);
+      document.getElementById('gable-trim').innerText = Math.ceil(tGable / 120);
+      document.getElementById('end-wall-flashing').innerText = Math.ceil(tEndWall / 120);
+      document.getElementById('side-wall-flashing').innerText = Math.ceil(tSideWall / 120);
+      document.getElementById('total-screws').innerText = Math.ceil(mechSq > 0 ? grandSq / 1.25 : grandSq);
+      document.getElementById('end-wall-tile').style.display = tEndWall > 0 ? '' : 'none';
+      document.getElementById('side-wall-tile').style.display = tSideWall > 0 ? '' : 'none';
     }
 
-    // --- BUTTON ACTIONS ---
-    function validateAndSave() {
-      if (!projectName || !projectName.trim()) {
-        alert("Please enter a Project Name before saving.");
-        document.getElementById("project-name").focus();
-        return;
-      }
-      saveProjectAsHTML();
-    }
-
+    function validateAndSave() { if (!projectName.trim()) { alert("Please enter a Project Name."); document.getElementById("project-name").focus(); return; } saveProjectAsHTML(); }
     function saveProjectAsHTML() {
-      const htmlSource = document.documentElement.outerHTML;
-      const dataScript = `<script id="__saved_data__"> (function() { window.__SAVED_PROJECT__ = ${JSON.stringify({ projectName, sections })}; })(); <\/script>`;
-      const injected = htmlSource.replace('</head>', dataScript + '\n</head>');
-      const blob = new Blob([injected], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${(projectName || 'project').replace(/[^a-z0-9]/gi, '_')}_roof_calculator.html`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const data = `<script id="__saved_data__"> (function() { window.__SAVED_PROJECT__ = ${JSON.stringify({ projectName, sections })}; })(); <\/script>`;
+      const blob = new Blob([document.documentElement.outerHTML.replace('</head>', data + '</head>')], { type: 'text/html' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${projectName.replace(/[^a-z0-9]/gi, '_')}_calculator.html`; a.click();
     }
 
     function sendToOffice() {
-      if (!projectName || !projectName.trim()) {
-        alert("Please enter a Project Name first.");
-        document.getElementById("project-name").focus();
-        return;
-      }
-
-      // Download project data first
+      if (!projectName.trim()) { alert("Please enter a Project Name."); return; }
       saveProjectAsHTML();
-
-      const subject = encodeURIComponent(`Roof Quote Request: ${projectName}`);
-      const body = encodeURIComponent(
-`Hi Team,
-
-I have generated the roof calculator files for:
-Project: ${projectName}
-
-Summary:
-- Total Panels: ${document.getElementById('total-panels').innerText}
-- Total Sq Ft: ${document.getElementById('total-sq-ft').innerText} sq ft
-
-INSTRUCTIONS FOR SENDER:
-The project data file (.html) and the project PDF report have now been downloaded to your computer. 
-
-Please follow these steps:
-1. Open your 'Downloads' folder.
-2. Manually attach BOTH the .html project file and the PDF report to this email.
-3. Attach any relevant pictures or sketches of the roof.
-
-Thank you!`
-      );
-      const mailtoLink = `mailto:info@smsupply.ca,tom@smsupply.ca?subject=${subject}&body=${body}`;
-
-      const openEmail = () => {
-        window.removeEventListener('afterprint', openEmail);
-        setTimeout(() => { window.location.href = mailtoLink; }, 500);
-      };
-      
-      window.addEventListener('afterprint', openEmail);
+      const body = encodeURIComponent(`Project: ${projectName}\n\nINSTRUCTIONS FOR SENDER:\nThe PDF and .html files have been downloaded to your 'Downloads' folder. Please manually attach BOTH files to this email before sending.\n\nSummary:\n- Panels: ${document.getElementById('total-panels').innerText}\n- Sq Ft: ${document.getElementById('total-sq-ft').innerText}`);
+      window.addEventListener('afterprint', () => { setTimeout(() => { window.location.href = `mailto:info@smsupply.ca,tom@smsupply.ca?subject=Request: ${projectName}&body=${body}`; }, 500); }, { once: true });
       window.print();
     }
 
-    // --- UI HELPERS ---
+    function updatePitch(id, val) { const s = sections.find(x => x.id === id); s.pitch = parseFloat(val) || 4; document.getElementById(`pitch-print-${id}`).textContent = s.pitch; updateUI(id); }
+    function updateVal(id, field, val) { const s = sections.find(x => x.id === id); s[field] = val; updateUI(id); }
+    function updateProfile(id, val) { const s = sections.find(x => x.id === id); if (s) { s.profile = val; s.coverage = (val === 'mechanical') ? 15.75 : 36; updateUI(id); } }
     function showHowToUse() { document.getElementById('howto-modal').classList.remove('hidden'); }
     function closeHowToUse() { document.getElementById('howto-modal').classList.add('hidden'); }
-
-    function updatePitch(id, val) {
-      const s = sections.find(x => x.id === id);
-      s.pitch = parseFloat(val) || 4;
-      const printSpan = document.getElementById(`pitch-print-${id}`);
-      if (printSpan) printSpan.textContent = s.pitch;
-      updateUI(id);
-    }
+    function toggleDormer(id, chk) { const s = sections.find(x => x.id === id); s.hasDormer = chk; if (chk) openDormerModal(id); else updateUI(id); }
+    function openDormerModal(id) { activeDormerId = id; const s = sections.find(x => x.id === id); document.getElementById('m-dormer-left').value = s.dormer.left; document.getElementById('m-dormer-width').value = s.dormer.width; document.getElementById('m-dormer-bottom').value = s.dormer.bottom; document.getElementById('m-dormer-top').value = s.dormer.top; document.getElementById('dormer-modal').classList.remove('hidden'); }
+    function closeDormerModal() { document.getElementById('dormer-modal').classList.add('hidden'); updateUI(activeDormerId); }
+    function saveDormerData() { const s = sections.find(x => x.id === activeDormerId); s.dormer = { left: parseFloat(document.getElementById('m-dormer-left').value)||0, width: parseFloat(document.getElementById('m-dormer-width').value)||0, bottom: parseFloat(document.getElementById('m-dormer-bottom').value)||0, top: parseFloat(document.getElementById('m-dormer-top').value)||0 }; }
+    function toggleWall(id, f, chk) { const s = sections.find(x => x.id === id); s[f] = chk; updateSummary(); }
 
     function updateUI(id) {
-      const s = sections.find(x => x.id === id);
-      const res = calculate(s);
-      const svg = document.getElementById(`svg-${id}`);
-      const listContainer = document.getElementById(`list-${id}`);
-      if (!res) { svg.innerHTML = ''; listContainer.innerHTML = ''; updateSummary(); return; }
-
-      const w = 800, h = 300, m = 50, drawW = w - (m * 2), scale = drawW / res.maxW;
-      const hScale = (h - (m * 2)) / (parseFloat(s.height) || 1);
-      const rW = (parseFloat(s.ridge) || 0) * scale, eW = (parseFloat(s.eave) || 0) * scale;
-      let rX1, eX1;
-      if (s.config === 'left') { rX1 = m + drawW - rW; eX1 = m + drawW - eW; }
-      else if (s.config === 'right') { rX1 = m; eX1 = m; }
-      else { rX1 = m + (drawW - rW) / 2; eX1 = m + (drawW - eW) / 2; }
-
-      const points = `${eX1},${h-m} ${eX1+eW},${h-m} ${rX1+rW},${m} ${rX1},${m}`;
-      let lines = '', step = res.coverage * scale;
-      if (s.config === 'left') { for (let x = (eX1+eW) - step; x > Math.min(eX1, rX1); x -= step) lines += `<line x1="${x}" y1="${m}" x2="${x}" y2="${h-m}" stroke="#cbd5e1" stroke-dasharray="4" />`; }
-      else { for (let x = Math.min(eX1, rX1) + step; x < Math.max(eX1+eW, rX1+rW); x += step) lines += `<line x1="${x}" y1="${m}" x2="${x}" y2="${h-m}" stroke="#cbd5e1" stroke-dasharray="4" />`; }
-
-      let dSvg = '';
-      if (s.hasDormer) {
-        const dx = eX1 + (s.dormer.left * scale), dyB = (h-m) - (s.dormer.bottom * hScale), dyP = m + (s.dormer.top * hScale), dw = s.dormer.width * scale;
-        dSvg = `<polygon points="${dx},${dyB} ${dx+dw},${dyB} ${dx+dw/2},${dyP}" fill="white" stroke="#ef4444" stroke-width="2" stroke-dasharray="4"/>`;
-      }
-      svg.innerHTML = `<polygon points="${points}" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>${lines}${dSvg}`;
-      
+      const s = sections.find(x => x.id === id), res = calculate(s), svg = document.getElementById(`svg-${id}`), list = document.getElementById(`list-${id}`);
+      if (!res) return;
+      const w = 800, h = 300, m = 50, scale = (w - 2*m) / res.maxW, hScale = (h - 2*m) / (parseFloat(s.height)||1), rW = (parseFloat(s.ridge)||0)*scale, eW = (parseFloat(s.eave)||0)*scale;
+      let rX, eX; if (s.config === 'left') { rX = m + (w-2*m) - rW; eX = m + (w-2*m) - eW; } else if (s.config === 'right') { rX = m; eX = m; } else { rX = m + (w-2*m-rW)/2; eX = m + (w-2*m-eW)/2; }
+      let dSvg = ''; if (s.hasDormer) { const dX = eX + s.dormer.left*scale, dY = (h-m) - s.dormer.bottom*hScale, dW = s.dormer.width*scale; dSvg = `<polygon points="${dX},${dY} ${dX+dW},${dY} ${dX+dW/2},${m+s.dormer.top*hScale}" fill="white" stroke="red" stroke-width="2" stroke-dasharray="4"/>`; }
+      svg.innerHTML = `<polygon points="${eX},${h-m} ${eX+eW},${h-m} ${rX+rW},${m} ${rX},${m}" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>${dSvg}`;
       let rows = '', i = 0;
       while (i < res.panelData.length) {
-        let start = i, current = res.panelData[i];
-        while (i < res.panelData.length && res.panelData[i].type === current.type && res.panelData[i].len === current.len) i++;
-        rows += `<tr class="border-b"><td class="p-3 text-center text-slate-400 font-medium">${i - start}</td><td class="p-3 font-bold text-right text-blue-700">${current.len}"${current.type !== 'standard' ? ' (' + current.type + ')' : ''}</td></tr>`;
+        let start = i, p = res.panelData[i]; while (i < res.panelData.length && res.panelData[i].len === p.len) i++;
+        rows += `<tr class="border-b"><td class="p-2 text-center">${i - start}</td><td class="p-2 text-right font-bold text-blue-700">${p.len}"${p.type !== 'standard' ? ' ('+p.type+')' : ''}</td></tr>`;
       }
-      listContainer.innerHTML = `<table class="w-full text-xs"><thead><tr class="bg-slate-50 text-[10px] uppercase font-black text-slate-400 border-b"><th class="p-3 text-center">Qty</th><th class="p-3 text-right">Length</th></tr></thead><tbody>${rows}</tbody></table>`;
+      list.innerHTML = `<table class="w-full text-xs"><thead><tr class="bg-slate-50 border-b text-[10px] uppercase font-bold"><th class="p-2">Qty</th><th class="p-2 text-right">Len</th></tr></thead><tbody>${rows}</tbody></table>`;
       updateSummary();
     }
 
-    function toggleDormer(id, checked) { const s = sections.find(x => x.id === id); s.hasDormer = checked; if (checked) openDormerModal(id); else updateUI(id); }
-    function toggleWall(id, field, checked) { const s = sections.find(x => x.id === id); s[field] = checked; updateSummary(); }
-    function updateVal(id, field, val) { const s = sections.find(x => x.id === id); s[field] = val; updateUI(id); }
-    function updateProfile(id, val) { const s = sections.find(x => x.id === id); if (s) { s.profile = val; s.coverage = (val === 'mechanical') ? 15.75 : 36; updateUI(id); } }
-
-    function openDormerModal(id) {
-      activeDormerId = id;
-      const s = sections.find(x => x.id === id);
-      document.getElementById('m-dormer-left').value = s.dormer.left || '';
-      document.getElementById('m-dormer-width').value = s.dormer.width || '';
-      document.getElementById('m-dormer-bottom').value = s.dormer.bottom || '';
-      document.getElementById('m-dormer-top').value = s.dormer.top || '';
-      document.getElementById('dormer-modal').classList.remove('hidden');
-    }
-    function closeDormerModal() { document.getElementById('dormer-modal').classList.add('hidden'); if (activeDormerId) updateUI(activeDormerId); }
-    function saveDormerData() {
-      const s = sections.find(x => x.id === activeDormerId);
-      s.dormer = {
-        left: parseFloat(document.getElementById('m-dormer-left').value) || 0,
-        width: parseFloat(document.getElementById('m-dormer-width').value) || 0,
-        bottom: parseFloat(document.getElementById('m-dormer-bottom').value) || 0,
-        top: parseFloat(document.getElementById('m-dormer-top').value) || 0
-      };
-      updateUI(activeDormerId);
-    }
-
-    function addSection() {
-      const nextL = String.fromCharCode(65 + sections.length), first = sections[0];
-      const s = { id: Date.now(), name: nextL, pitch: first ? first.pitch : 4, ridge: '', eave: '', height: '', profile: first ? first.profile : 'tuff', coverage: first ? first.coverage : 36, eaveFold: first ? first.eaveFold : '', config: 'right', hasDormer: false, dormer: { left: 0, width: 0, bottom: 0, top: 0 }, topAgainstWall: false, leftAgainstWall: false, rightAgainstWall: false };
-      sections.push(s); renderSection(s);
-    }
-
+    function addSection() { const first = sections[0], s = { id: Date.now(), name: String.fromCharCode(65 + sections.length), pitch: first.pitch, ridge: '', eave: '', height: '', profile: first.profile, coverage: first.coverage, eaveFold: first.eaveFold, config: 'right', hasDormer: false, dormer: { left:0, width:0, bottom:0, top:0 }, topAgainstWall:false, leftAgainstWall:false, rightAgainstWall:false }; sections.push(s); renderSection(s); }
     function removeSection(id) { if (sections.length > 1) { sections = sections.filter(x => x.id !== id); document.getElementById(`section-${id}`).remove(); updateSummary(); } }
 
     function renderSection(s) {
       const div = document.createElement('div');
-      div.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8";
+      div.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden";
       div.id = `section-${s.id}`;
       div.innerHTML = `
-        <div class="p-6 bg-slate-50 border-b flex justify-between items-center">
-          <div class="flex items-center gap-6">
+        <div class="p-4 md:p-6 bg-slate-50 border-b flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+          <div class="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-start">
             <input type="text" value="${s.name}" class="section-label" oninput="updateVal(${s.id}, 'name', this.value)">
             <div class="flex items-center gap-1.5 text-slate-600 font-medium">
               <span class="text-sm">Pitch:</span>
-              <input type="number" value="${s.pitch || 4}" class="input-field w-16 text-center text-lg font-semibold no-print" oninput="updatePitch(${s.id}, this.value)" min="1" max="24">
-              <span class="text-lg font-bold no-print">/12</span>
-              <span class="print-only text-lg font-bold text-slate-800">
-                <span id="pitch-print-${s.id}">${s.pitch || 4}</span><span class="pitch-suffix-print">/12</span>
-              </span>
+              <input type="number" value="${s.pitch}" class="input-field w-14 text-center font-bold no-print" oninput="updatePitch(${s.id}, this.value)">
+              <span class="no-print">/12</span>
+              <span class="print-only"><span id="pitch-print-${s.id}">${s.pitch}</span>/12</span>
             </div>
           </div>
-          <div class="flex items-center gap-4 flex-wrap no-print">
-             <label class="flex items-center gap-2 text-sm font-bold text-slate-600 cursor-pointer"><input type="checkbox" ${s.hasDormer ? 'checked' : ''} onchange="toggleDormer(${s.id}, this.checked)" class="w-4 h-4 rounded text-blue-600"> Dormer?</label>
-             <label class="flex items-center gap-2 text-sm font-bold text-orange-600 cursor-pointer"><input type="checkbox" ${s.topAgainstWall ? 'checked' : ''} onchange="toggleWall(${s.id}, 'topAgainstWall', this.checked)" class="w-4 h-4 rounded accent-orange-500"> Top wall?</label>
-             <label class="flex items-center gap-2 text-sm font-bold text-orange-600 cursor-pointer"><input type="checkbox" ${s.leftAgainstWall ? 'checked' : ''} onchange="toggleWall(${s.id}, 'leftAgainstWall', this.checked)" class="w-4 h-4 rounded accent-orange-500"> Left wall?</label>
-             <label class="flex items-center gap-2 text-sm font-bold text-orange-600 cursor-pointer"><input type="checkbox" ${s.rightAgainstWall ? 'checked' : ''} onchange="toggleWall(${s.id}, 'rightAgainstWall', this.checked)" class="w-4 h-4 rounded accent-orange-500"> Right wall?</label>
-             <button onclick="removeSection(${s.id})" class="text-slate-400 hover:text-red-500"><i data-lucide="trash-2"></i></button>
+          <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto no-print">
+            <label class="flex items-center gap-1.5 text-[11px] font-bold text-slate-600 bg-white px-2 py-1 rounded border"><input type="checkbox" ${s.hasDormer ? 'checked' : ''} onchange="toggleDormer(${s.id}, this.checked)"> Dormer</label>
+            <label class="flex items-center gap-1.5 text-[11px] font-bold text-orange-600 bg-white px-2 py-1 rounded border border-orange-100"><input type="checkbox" ${s.topAgainstWall ? 'checked' : ''} onchange="toggleWall(${s.id}, 'topAgainstWall', this.checked)"> Top wall</label>
+            <label class="flex items-center gap-1.5 text-[11px] font-bold text-orange-600 bg-white px-2 py-1 rounded border border-orange-100"><input type="checkbox" ${s.leftAgainstWall ? 'checked' : ''} onchange="toggleWall(${s.id}, 'leftAgainstWall', this.checked)"> Left wall</label>
+            <label class="flex items-center gap-1.5 text-[11px] font-bold text-orange-600 bg-white px-2 py-1 rounded border border-orange-100"><input type="checkbox" ${s.rightAgainstWall ? 'checked' : ''} onchange="toggleWall(${s.id}, 'rightAgainstWall', this.checked)"> Right wall</label>
+            <button onclick="removeSection(${s.id})" class="ml-auto text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
           </div>
         </div>
-        <div class="p-6">
-          <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6 no-print">
-            <div><label class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Ridge (In)</label><input type="number" value="${s.ridge}" class="input-field" oninput="updateVal(${s.id}, 'ridge', this.value)"></div>
-            <div><label class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Eave (In)</label><input type="number" value="${s.eave}" class="input-field" oninput="updateVal(${s.id}, 'eave', this.value)"></div>
-            <div><label class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Height (In)</label><input type="number" value="${s.height}" class="input-field" oninput="updateVal(${s.id}, 'height', this.value)"></div>
-            <div><label class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Profile</label><select class="input-field" onchange="updateProfile(${s.id}, this.value)"><option value="mechanical" ${s.profile === 'mechanical' ? 'selected' : ''}>Mechanical (15.75")</option><option value="tuff" ${s.profile === 'tuff' ? 'selected' : ''}>Tuff Rib (36")</option><option value="diamond" ${s.profile === 'diamond' ? 'selected' : ''}>Diamond (36")</option></select></div>
-            <div><label class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Eave Fold (In)</label><input type="number" value="${s.eaveFold}" class="input-field" oninput="updateVal(${s.id}, 'eaveFold', this.value)"></div>
-            <div><label class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Angle</label><select class="input-field" onchange="updateVal(${s.id}, 'config', this.value)"><option value="right" ${s.config==='right'?'selected':''}>Right Angle</option><option value="left" ${s.config==='left'?'selected':''}>Left Angle</option><option value="both" ${s.config==='both'?'selected':''}>Both/Centered</option></select></div>
+        <div class="p-4">
+          <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4 no-print">
+            <div><label class="text-[10px] font-black uppercase text-slate-400">Ridge</label><input type="number" value="${s.ridge}" class="input-field" oninput="updateVal(${s.id}, 'ridge', this.value)"></div>
+            <div><label class="text-[10px] font-black uppercase text-slate-400">Eave</label><input type="number" value="${s.eave}" class="input-field" oninput="updateVal(${s.id}, 'eave', this.value)"></div>
+            <div><label class="text-[10px] font-black uppercase text-slate-400">Height</label><input type="number" value="${s.height}" class="input-field" oninput="updateVal(${s.id}, 'height', this.value)"></div>
+            <div><label class="text-[10px] font-black uppercase text-slate-400">Profile</label><select class="input-field" onchange="updateProfile(${s.id}, this.value)"><option value="mechanical" ${s.profile==='mechanical'?'selected':''}>Mech (15.75")</option><option value="tuff" ${s.profile==='tuff'?'selected':''}>Tuff (36")</option></select></div>
+            <div><label class="text-[10px] font-black uppercase text-slate-400">Fold/Over</label><input type="number" value="${s.eaveFold}" class="input-field" oninput="updateVal(${s.id}, 'eaveFold', this.value)"></div>
+            <div><label class="text-[10px] font-black uppercase text-slate-400">Angle</label><select class="input-field" onchange="updateVal(${s.id}, 'config', this.value)"><option value="right" ${s.config==='right'?'selected':''}>Right</option><option value="left" ${s.config==='left'?'selected':''}>Left</option><option value="both" ${s.config==='both'?'selected':''}>Both</option></select></div>
           </div>
-          <div class="grid lg:grid-cols-4 gap-6 print-grid">
-            <div class="lg:col-span-3 bg-slate-50 rounded-xl p-4 border flex items-center justify-center min-h-[250px]"><svg id="svg-${s.id}" viewBox="0 0 800 300" class="w-full h-auto drop-shadow"></svg></div>
-            <div id="list-${s.id}" class="border rounded-xl overflow-y-auto max-h-96 bg-white"></div>
+          <div class="grid lg:grid-cols-4 gap-4 print-grid">
+            <div class="lg:col-span-3 bg-slate-50 rounded-xl p-2 border flex items-center justify-center min-h-[200px]"><svg id="svg-${s.id}" viewBox="0 0 800 300" class="w-full h-auto"></svg></div>
+            <div id="list-${s.id}" class="border rounded-xl bg-white overflow-hidden"></div>
           </div>
         </div>`;
       document.getElementById('sections-container').appendChild(div);
       lucide.createIcons(); updateUI(s.id);
     }
 
-    // INIT
-    if (window.__SAVED_PROJECT__) {
-      const saved = window.__SAVED_PROJECT__;
-      projectName = saved.projectName || '';
-      document.getElementById('project-name').value = projectName;
-      sections = saved.sections;
-    }
-    document.getElementById('print-date').textContent = 'Date: ' + new Date().toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' });
+    if (window.__SAVED_PROJECT__) { projectName = window.__SAVED_PROJECT__.projectName; document.getElementById('project-name').value = projectName; sections = window.__SAVED_PROJECT__.sections; }
+    document.getElementById('print-date').textContent = new Date().toLocaleDateString();
     sections.forEach(renderSection);
-    lucide.createIcons();
   </script>
 </body>
 </html>
