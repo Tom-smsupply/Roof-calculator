@@ -4,17 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Summit Metal Supply Roof Calculator</title>
-  
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1e40af">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="logo.png">
-
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@latest/font/lucide.css"/>
-  
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; overscroll-behavior-y: contain; }
     input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -33,45 +30,27 @@
   </style>
 </head>
 <body class="min-h-screen bg-slate-50 p-2 md:p-8">
-
   <div id="install-banner" class="no-print bg-blue-800 text-white p-3 flex justify-between items-center sticky top-0 z-[100] shadow-lg">
-    <div class="flex items-center gap-3">
-        <img src="logo.png" class="w-8 h-8 rounded" alt="logo">
-        <p class="text-xs font-bold">Install Summit Calculator for faster use</p>
-    </div>
-    <div class="flex gap-2">
-        <button onclick="installApp()" class="bg-white text-blue-800 px-3 py-1 rounded text-xs font-black uppercase">Install</button>
-        <button onclick="closeInstallBanner()" class="text-white/70 px-2">×</button>
-    </div>
+    <div class="flex items-center gap-3"><img src="logo.png" class="w-8 h-8 rounded" alt="logo"><p class="text-xs font-bold">Install Summit Calculator for faster use</p></div>
+    <div class="flex gap-2"><button onclick="installApp()" class="bg-white text-blue-800 px-3 py-1 rounded text-xs font-black uppercase">Install</button><button onclick="closeInstallBanner()" class="text-white/70 px-2">×</button></div>
   </div>
-
   <div class="max-w-7xl mx-auto">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-6">
       <div class="flex-1">
         <div class="flex flex-col md:flex-row md:items-baseline gap-2 md:gap-4 mb-1">
             <div class="text-blue-700 text-3xl md:text-4xl font-extrabold tracking-[-2px]">SUMMIT METAL SUPPLY</div>
-            <a href="https://smsupply.ca" target="_blank" class="no-print text-blue-600 hover:text-blue-800 text-sm font-bold flex items-center gap-1 transition">
-                <i data-lucide="external-link" class="w-3.5 h-3.5"></i> smsupply.ca
-            </a>
+            <a href="https://smsupply.ca" target="_blank" class="no-print text-blue-600 hover:text-blue-800 text-sm font-bold flex items-center gap-1 transition"><i data-lucide="external-link" class="w-3.5 h-3.5"></i> smsupply.ca</a>
         </div>
         <h1 class="text-2xl md:text-3xl font-bold text-slate-900">Roof Calculator</h1>
-        <div class="mt-3 flex flex-col md:flex-row md:items-center gap-3">
-          <span class="font-semibold text-slate-600">Project Name:</span>
-          <input id="project-name" type="text" class="input-field max-w-md no-print" placeholder="e.g. 123 Main St - Jones"
-                 oninput="projectName = this.value; document.getElementById('project-name-print').textContent = this.value; document.title = this.value || 'Summit Metal Supply Roof Calculator';">
-          <span id="project-name-print" class="print-only text-xl font-bold"></span>
-        </div>
+        <div class="mt-3 flex flex-col md:flex-row md:items-center gap-3"><span class="font-semibold text-slate-600">Project Name:</span><input id="project-name" type="text" class="input-field max-w-md no-print" placeholder="e.g. 123 Main St" oninput="projectName = this.value; document.getElementById('project-name-print').textContent = this.value; document.title = this.value || 'Summit Metal Supply Roof Calculator';"><span id="project-name-print" class="print-only text-xl font-bold"></span></div>
       </div>
       <div class="flex items-center gap-2 no-print flex-wrap">
-        <button onclick="showHowToUse()" class="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2">
-          <i data-lucide="help-circle" class="w-4 h-4"></i> How to Use
-        </button>
+        <button onclick="showHowToUse()" class="bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2"><i data-lucide="help-circle" class="w-4 h-4"></i> How to Use</button>
         <button onclick="validateAndSave()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-semibold">Save</button>
         <button onclick="sendToOffice()" class="bg-violet-600 text-white px-4 py-2 rounded-xl text-sm font-semibold">Send to Office</button>
         <button onclick="window.print()" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-semibold">Print/PDF</button>
       </div>
     </div>
-
     <div id="summary-container" class="mb-8 bg-blue-900 text-white rounded-xl p-4 md:p-6 shadow-lg">
       <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i data-lucide="calculator"></i> Project Totals</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -93,13 +72,9 @@
         </div>
       </div>
     </div>
-
     <div id="sections-container" class="space-y-6"></div>
-    <div class="mt-8 mb-12 flex justify-center no-print">
-      <button onclick="addSection()" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg">Add Section</button>
-    </div>
+    <div class="mt-8 mb-12 flex justify-center no-print"><button onclick="addSection()" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg">Add Section</button></div>
   </div>
-
   <div id="dormer-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-overlay">
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
       <div class="p-4 border-b bg-slate-50 flex justify-between items-center"><h3 class="font-bold">Dormer Settings</h3><button onclick="closeDormerModal()">×</button></div>
@@ -114,42 +89,28 @@
       <div class="p-4 bg-slate-50 text-right"><button onclick="closeDormerModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Save</button></div>
     </div>
   </div>
-
   <div id="howto-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-overlay">
     <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-      <div class="p-6 border-b bg-slate-50 flex justify-between items-center">
-        <h3 class="font-bold text-xl flex items-center gap-2"><i data-lucide="help-circle" class="text-blue-600"></i> How to Use the Calculator</h3>
-        <button onclick="closeHowToUse()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">×</button>
-      </div>
+      <div class="p-6 border-b bg-slate-50 flex justify-between items-center"><h3 class="font-bold text-xl flex items-center gap-2"><i data-lucide="help-circle" class="text-blue-600"></i> How to Use the Calculator</h3><button onclick="closeHowToUse()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">×</button></div>
       <div class="p-6 md:p-8 overflow-auto max-h-[calc(90vh-130px)] how-to-content text-sm">
-        <p>Welcome to the Summit Metal Supply Roof Calculator. This tool provides professional estimates for metal roofing panels and trims.</p>
-        
+        <p>Welcome to the Summit Metal Supply Roof Calculator.</p>
         <h4>Section Setup</h4>
         <ul>
-          <li><strong>Section Names:</strong> Click on the section name (e.g., "A") to edit it for better clarity (e.g., "Main Roof").</li>
-          <li><strong>Profile:</strong> Choose your style in Section A. All sections sync automatically.</li>
-          <li><strong>Angle Type:</strong> 
-            <ul>
-              <li><em>Right/Left Angle:</em> One side square, one side angled (Hips/Valleys).</li>
-              <li><em>Both/Centered:</em> A standard centered gable triangle.</li>
-            </ul>
-          </li>
+          <li><strong>Section Names:</strong> Edit the name for clarity (e.g. "Front Porch").</li>
+          <li><strong>Profile:</strong> Set style in Section A; all others sync.</li>
+          <li><strong>Angle Type:</strong> Right/Left Angle (One square side) or Both (Centered gable).</li>
         </ul>
-
         <h4>Dormer Entry</h4>
-        <p>Toggle "Dormer" and measure from the <strong>far-left edge</strong> of that specific section.</p>
-
-        <p class="mt-6 pt-4 border-t font-medium text-slate-700 italic">We are constantly improving our calculator. If you have specific ideas for improvements or new features, please let us know.</p>
+        <p>Measure from the <strong>far-left edge</strong> of the section to find the dormer base start.</p>
+        <p class="mt-6 pt-4 border-t font-medium text-slate-700 italic">We are constantly improving. Email ideas to:</p>
         <p class="mt-2 font-bold text-slate-900">Contact: <a href="mailto:info@smsupply.ca" class="text-blue-600 underline">info@smsupply.ca</a></p>
       </div>
       <div class="p-4 bg-slate-50 text-right"><button onclick="closeHowToUse()" class="bg-slate-800 text-white px-8 py-2 rounded-xl font-semibold">Got it</button></div>
     </div>
   </div>
-
   <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
   <script>
     let deferredPrompt, activeDormerId = null, projectName = '', sections = [];
-
     window.addEventListener('beforeunload', (e) => { if (sections.some(s => s.ridge || s.eave)) { e.preventDefault(); e.returnValue = ''; } });
     window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('install-banner').style.display = 'flex'; });
     async function installApp() { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; closeInstallBanner(); } }
@@ -159,25 +120,45 @@
     function calculate(s) {
       const cov = parseFloat(s.coverage)||0, r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0, h = parseFloat(s.height)||0, fold = parseFloat(s.eaveFold)||0;
       if (cov <= 0 || (r <= 0 && e <= 0)) return null;
-      const totalP = Math.ceil(Math.max(r, e) / cov), data = [];
+      const maxW = Math.max(r, e), totalP = Math.ceil(maxW / cov), data = [];
       const hDiff = Math.abs(r - e), slope = hDiff > 0 ? h / hDiff : 0;
+      
       for (let i = 0; i < totalP; i++) {
-        const start = i * cov, end = (i+1) * cov;
-        let base = start < Math.min(r,e) ? h : h - ((start - Math.min(r,e)) * slope);
+        // Physical panel position is determined by the config direction
+        let startX, endX;
+        if (s.config === 'left') {
+          startX = maxW - ((i + 1) * cov);
+          endX = maxW - (i * cov);
+        } else if (s.config === 'both') {
+          startX = (maxW / 2) - ((totalP / 2 - i) * cov);
+          endX = startX + cov;
+        } else { // config right
+          startX = i * cov;
+          endX = (i + 1) * cov;
+        }
+
+        let base;
+        if (s.config === 'left') {
+            base = endX < (maxW - Math.min(r,e)) ? h - ((maxW - Math.min(r,e) - endX) * slope) : h;
+        } else {
+            base = startX < Math.min(r,e) ? h : h - ((startX - Math.min(r,e)) * slope);
+        }
+
         if (s.hasDormer) {
-          const d = s.dormer;
-          if (start >= d.left && end <= d.left + d.width) {
-            data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: start });
+          const d = s.dormer, dR = d.left + d.width;
+          // Check if this physical panel overlaps the dormer zone measured from the left
+          if (endX > d.left && startX < dR) {
+            data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: startX });
             const pH = h - d.bottom - d.top, mid = d.left + d.width / 2;
             const getDH = (x) => Math.max(0, pH * (1 - Math.abs(x - mid) / (d.width / 2)));
-            const minDormerHeight = Math.min(getDH(start), getDH(end));
-            data.push({ len: Math.ceil(d.top + (pH - minDormerHeight)), type: 'over', xPos: start });
+            const minDormerHeight = Math.min(getDH(Math.max(startX, d.left)), getDH(Math.min(endX, dR)));
+            data.push({ len: Math.ceil(d.top + (pH - minDormerHeight)), type: 'over', xPos: startX });
             continue;
           }
         }
-        data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard', xPos: start });
+        data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard', xPos: startX });
       }
-      return { panelData: data, maxW: Math.max(r,e), coverage: cov };
+      return { panelData: data, maxW, coverage: cov };
     }
 
     function updateSummary() {
@@ -229,35 +210,32 @@
     function updateUI(id) {
       const s = sections.find(x => x.id === id), res = calculate(s), svg = document.getElementById(`svg-${id}`), list = document.getElementById(`list-${id}`);
       if (!res) return;
-      const w = 800, h = 300, m = 50, scale = (w-2*m)/res.maxW, hScale = (h-2*m)/(parseFloat(s.height)||1), rW = (parseFloat(s.ridge)||0)*scale, eW = (parseFloat(s.eave)||0)*scale;
+      const w = 800, h = 300, m = 50, scale = (w-2*m)/res.maxW, hScale = (h-2*m)/(parseFloat(s.height)||1);
+      const rW = (parseFloat(s.ridge)||0)*scale, eW = (parseFloat(s.eave)||0)*scale;
       
-      let rX, eX; 
+      let rX, eX;
       if (s.config === 'left') { rX = m + (w-2*m) - rW; eX = m + (w-2*m) - eW; } 
       else if (s.config === 'right') { rX = m; eX = m; } 
       else { rX = m + (w-2*m-rW)/2; eX = m + (w-2*m-eW)/2; }
       
       let pLines = '', pLabels = '', pStep = res.coverage * scale;
-
-      // SYNCED DORMER COORDINATE LOGIC
       res.panelData.forEach((p) => {
-        // Universal positioning relative to the eave start (eX)
-        let xOffset = p.xPos * scale;
-        let x = (s.config === 'left') ? (eX + eW) - xOffset : eX + xOffset;
+        // Draw panels from the ground-truth physical position
+        let x = m + (p.xPos * scale);
+        // If config is both, offset by centering
+        if (s.config === 'both') x = m + (w-2*m-res.maxW*scale)/2 + (p.xPos * scale);
         
         pLines += `<line x1="${x}" y1="${m}" x2="${x}" y2="${h-m}" stroke="#cbd5e1" stroke-dasharray="4" />`;
-        
-        let lX = (s.config === 'left') ? x - (pStep/2) : x + (pStep/2), lY = h/2;
+        let lX = x + (pStep/2), lY = h/2;
         if (p.type === 'under') lY = (h-m) - (p.len * hScale / 2);
         if (p.type === 'over') lY = m + (p.len * hScale / 2);
-        
         pLabels += `<g><rect x="${lX-12}" y="${lY-8}" width="24" height="16" fill="white" fill-opacity="0.95" rx="4"/><text x="${lX}" y="${lY+5}" font-size="10" font-weight="black" fill="${p.type==='standard'?'#1e40af':'#ef4444'}" text-anchor="middle">${p.len}</text></g>`;
       });
 
       let dSvg = ''; 
       if (s.hasDormer) { 
-        // Universal Dormer position sync
-        let dXOffset = s.dormer.left * scale;
-        let dX = (s.config === 'left') ? (eX + eW) - (dXOffset + s.dormer.width * scale) : eX + dXOffset;
+        let dX = m + (s.dormer.left * scale);
+        if (s.config === 'both') dX = m + (w-2*m-res.maxW*scale)/2 + (s.dormer.left * scale);
         let dY = (h-m) - s.dormer.bottom*hScale, dW = s.dormer.width*scale; 
         dSvg = `<polygon points="${dX},${dY} ${dX+dW},${dY} ${dX+dW/2},${m+s.dormer.top*hScale}" fill="white" stroke="red" stroke-width="2" stroke-dasharray="4"/>`; 
       }
@@ -267,8 +245,7 @@
       let summaryMap = [];
       res.panelData.forEach(p => {
           let existing = summaryMap.find(item => item.len === p.len && item.type === p.type);
-          if (existing) existing.count++;
-          else summaryMap.push({ len: p.len, type: p.type, count: 1 });
+          if (existing) existing.count++; else summaryMap.push({ len: p.len, type: p.type, count: 1 });
       });
       let rows = summaryMap.map(item => `<tr class="border-b"><td class="p-2 text-center text-slate-500 font-medium">${item.count}</td><td class="p-2 text-right font-bold text-blue-700">${item.len}"${item.type !== 'standard' ? ' ('+item.type+')' : ''}</td></tr>`).join('');
       list.innerHTML = `<table class="w-full text-xs"><thead><tr class="bg-slate-50 border-b text-[10px] uppercase font-bold"><th class="p-2">Qty</th><th class="p-2 text-right">Len</th></tr></thead><tbody>${rows}</tbody></table>`;
@@ -295,19 +272,12 @@
     function toggleWall(id, f, chk) { sections.find(x => x.id === id)[f] = chk; updateSummary(); }
     function showHowToUse() { document.getElementById('howto-modal').classList.remove('hidden'); }
     function closeHowToUse() { document.getElementById('howto-modal').classList.add('hidden'); }
-
     function renderSection(s) {
       const div = document.createElement('div'); div.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8"; div.id = `section-${s.id}`;
       div.innerHTML = `<div class="p-4 md:p-6 bg-slate-50 border-b flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4"><div class="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-start"><input type="text" value="${s.name}" class="section-label" oninput="updateVal(${s.id}, 'name', this.value)"><div class="flex items-center gap-1.5 text-slate-600 font-medium"><span class="text-sm">Pitch:</span><input type="number" value="${s.pitch}" class="input-field w-14 text-center font-bold no-print" oninput="updatePitch(${s.id}, this.value)"><span class="no-print">/12</span><span class="print-only"><span id="pitch-print-${s.id}">${s.pitch}</span>/12</span></div></div><div class="flex flex-wrap items-center gap-2 w-full lg:w-auto no-print"><label class="flex items-center gap-1.5 text-[11px] font-bold text-slate-600 bg-white px-2 py-1 rounded border"><input type="checkbox" ${s.hasDormer ? 'checked' : ''} onchange="toggleDormer(${s.id}, this.checked)"> Dormer</label><label class="flex items-center gap-1.5 text-[11px] font-bold text-orange-600 bg-white px-2 py-1 rounded border border-orange-100"><input type="checkbox" ${s.topAgainstWall ? 'checked' : ''} onchange="toggleWall(${s.id}, 'topAgainstWall', this.checked)"> Top wall</label><label class="flex items-center gap-1.5 text-[11px] font-bold text-orange-600 bg-white px-2 py-1 rounded border border-orange-100"><input type="checkbox" ${s.leftAgainstWall ? 'checked' : ''} onchange="toggleWall(${s.id}, 'leftAgainstWall', this.checked)"> Left wall</label><label class="flex items-center gap-1.5 text-[11px] font-bold text-orange-600 bg-white px-2 py-1 rounded border border-orange-100"><input type="checkbox" ${s.rightAgainstWall ? 'checked' : ''} onchange="toggleWall(${s.id}, 'rightAgainstWall', this.checked)"> Right wall</label><button onclick="removeSection(${s.id})" class="ml-auto text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-5 h-5"></i></button></div></div><div class="p-4"><div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4 no-print"><div><label class="text-[10px] font-black uppercase text-slate-400">Ridge</label><input type="number" value="${s.ridge}" class="input-field" oninput="updateVal(${s.id}, 'ridge', this.value)"></div><div><label class="text-[10px] font-black uppercase text-slate-400">Eave</label><input type="number" value="${s.eave}" class="input-field" oninput="updateVal(${s.id}, 'eave', this.value)"></div><div><label class="text-[10px] font-black uppercase text-slate-400">Height</label><input type="number" value="${s.height}" class="input-field" oninput="updateVal(${s.id}, 'height', this.value)"></div><div><label class="text-[10px] font-black uppercase text-slate-400">Profile</label><select class="input-field" onchange="updateProfile(${s.id}, this.value)"><option value="mechanical" ${s.profile==='mechanical'?'selected':''}>Mech (15.75")</option><option value="tuff" ${s.profile==='tuff'?'selected':''}>Tuff (36")</option><option value="diamond" ${s.profile==='diamond'?'selected':''}>Diamond (36")</option></select></div><div><label class="text-[10px] font-black uppercase text-slate-400">Fold/Over</label><input type="number" value="${s.eaveFold}" class="input-field" oninput="updateVal(${s.id}, 'eaveFold', this.value)"></div><div><label class="text-[10px] font-black uppercase text-slate-400">Angle</label><select class="input-field" onchange="updateVal(${s.id}, 'config', this.value)"><option value="right" ${s.config==='right'?'selected':''}>Right</option><option value="left" ${s.config==='left'?'selected':''}>Left</option><option value="both" ${s.config==='both'?'selected':''}>Both</option></select></div></div><div class="grid lg:grid-cols-4 gap-4 print-grid"><div class="lg:col-span-3 bg-slate-50 rounded-xl p-2 border flex items-center justify-center min-h-[300px]"><svg id="svg-${s.id}" viewBox="0 0 800 300" class="w-full h-auto"></svg></div><div id="list-${s.id}" class="border rounded-xl bg-white overflow-hidden"></div></div></div>`;
       document.getElementById('sections-container').appendChild(div); lucide.createIcons(); updateUI(s.id);
     }
-
-    if (window.__SAVED_PROJECT__) { 
-      projectName = window.__SAVED_PROJECT__.projectName; 
-      document.getElementById('project-name').value = projectName; 
-      sections = window.__SAVED_PROJECT__.sections;
-      sections.forEach(renderSection);
-    } else { addSection(); }
+    if (window.__SAVED_PROJECT__) { projectName = window.__SAVED_PROJECT__.projectName; document.getElementById('project-name').value = projectName; sections = window.__SAVED_PROJECT__.sections; sections.forEach(renderSection); } else { addSection(); }
     document.getElementById('print-date').textContent = new Date().toLocaleDateString();
     lucide.createIcons();
   </script>
