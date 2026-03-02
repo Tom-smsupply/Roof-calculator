@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@latest/font/lucide.css"/>
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; overscroll-behavior-y: contain; }
+    html, body { overscroll-behavior-y: contain !important; } /* Prevents pull-to-refresh on mobile */
     input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     .input-field { border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.5rem 0.75rem; width: 100%; transition: all 0.2s; }
     .input-field:focus { border-color: #3b82f6; outline: 2px solid #dbeafe; }
@@ -312,7 +313,6 @@
       projectName = window.__SAVED_PROJECT__.projectName;
       document.getElementById('project-name').value = projectName;
       sections = window.__SAVED_PROJECT__.sections;
-      // Set lastProfile to the profile of the first section (A) if exists
       if (sections.length > 0) {
         lastProfile = sections[0].profile || 'tuff';
       }
