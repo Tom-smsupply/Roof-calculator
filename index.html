@@ -138,7 +138,8 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
   <script>
-    let activeDormerId = null, projectName = '', sections = [];
+    let activeDormerId = null, projectName = '', sections = [], lastProfile = 'tuff';
+
     function calculate(s) {
       const cov = parseFloat(s.coverage)||0, r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0, h = parseFloat(s.height)||0, fold = parseFloat(s.eaveFold)||0;
       if (cov <= 0 || (r <= 0 && e <= 0)) return null;
@@ -251,7 +252,8 @@
     }
     function addSection() {
       const nextL = String.fromCharCode(65 + sections.length);
-      const s = { id: Date.now(), name: nextL, ridge: '', eave: '', height: '', profile: 'tuff', coverage: 36, eaveFold: 0, config: 'right', hasDormer: false, dormer: { left:0, width:0, bottom:0, top:0 }, topAgainstWall:false, leftAgainstWall:false, rightAgainstWall:false };
+      const coverage = lastProfile === 'mechanical' ? 15.75 : 36;
+      const s = { id: Date.now(), name: nextL, ridge: '', eave: '', height: '', profile: lastProfile, coverage: coverage, eaveFold: 0, config: 'right', hasDormer: false, dormer: { left:0, width:0, bottom:0, top:0 }, topAgainstWall:false, leftAgainstWall:false, rightAgainstWall:false };
       sections.push(s); renderSection(s);
     }
     function validateAndSave() { if (!projectName.trim()) { alert("Please enter a Project Name."); return; } saveProjectAsHTML(); }
@@ -268,6 +270,7 @@
         const s = sections.find(x => x.id === id);
         s.profile = val;
         s.coverage = (val === 'mechanical') ? 15.75 : 36;
+        lastProfile = val;
         document.getElementById(`cov-display-${id}`).innerText = s.coverage + '" Coverage';
         updateUI(id);
     }
@@ -294,7 +297,7 @@
             <div><label class="text-[10px] font-black uppercase text-slate-400">Ridge (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'ridge', parseFloat(this.value))"></div>
             <div><label class="text-[10px] font-black uppercase text-slate-400">Eave (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'eave', parseFloat(this.value))"></div>
             <div><label class="text-[10px] font-black uppercase text-slate-400">Height (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'height', parseFloat(this.value))"></div>
-            <div><label class="text-[10px] font-black uppercase text-slate-400">Profile</label><select class="input-field" onchange="updateProfile(${s.id}, this.value)"><option value="tuff">Tuff (36")</option><option value="mechanical">Mech (15.75")</option><option value="diamond">Diamond (36")</option></select><p id="cov-display-${s.id}" class="text-[9px] mt-1 text-slate-500 font-bold">36" Coverage</p></div>
+            <div><label class="text-[10px] font-black uppercase text-slate-400">Profile</label><select class="input-field" onchange="updateProfile(${s.id}, this.value)"><option value="tuff" ${s.profile==='tuff'?'selected':''}>Tuff (36")</option><option value="mechanical" ${s.profile==='mechanical'?'selected':''}>Mech (15.75")</option><option value="diamond" ${s.profile==='diamond'?'selected':''}>Diamond (36")</option></select><p id="cov-display-${s.id}" class="text-[9px] mt-1 text-slate-500 font-bold">${s.coverage}" Coverage</p></div>
             <div><label class="text-[10px] font-black uppercase text-slate-400">Fold (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'eaveFold', parseFloat(this.value))"></div>
             <div><label class="text-[10px] font-black uppercase text-slate-400">Angle</label><select class="input-field" onchange="updateVal(${s.id}, 'config', this.value)"><option value="right">Right</option><option value="left">Left</option><option value="both">Both</option></select></div>
           </div>
@@ -309,6 +312,10 @@
       projectName = window.__SAVED_PROJECT__.projectName;
       document.getElementById('project-name').value = projectName;
       sections = window.__SAVED_PROJECT__.sections;
+      // Set lastProfile to the profile of the first section (A) if exists
+      if (sections.length > 0) {
+        lastProfile = sections[0].profile || 'tuff';
+      }
       sections.forEach(renderSection);
     } else { addSection(); }
     lucide.createIcons();
