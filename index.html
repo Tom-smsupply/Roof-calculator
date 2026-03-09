@@ -78,8 +78,17 @@
     <div class="mt-8 mb-12 flex justify-center no-print"><button onclick="addSection()" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg">Add Section</button></div>
   </div>
 
-  <!-- Help modal, Dormer modal, and all scripts remain exactly the same as before -->
+  <div class="mt-10 text-center no-print">
+    <button 
+      onclick="installPWA()" 
+      class="inline-flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-xl font-semibold shadow-md transition"
+    >
+      <i data-lucide="download" class="w-5 h-5"></i>
+      Download App (Install)
+    </button>
+  </div>
 
+  <!-- Help modal, Dormer modal, and all scripts remain exactly the same as before -->
   <div id="help-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-overlay">
     <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
       <div class="p-6">
@@ -144,6 +153,11 @@
   <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
   <script>
     let activeDormerId = null, projectName = '', sections = [], lastProfile = 'tuff';
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      window.deferredPrompt = e;
+    });
 
     function calculate(s) {
       const cov = parseFloat(s.coverage)||0, r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0, h = parseFloat(s.height)||0, fold = parseFloat(s.eaveFold)||0;
@@ -313,6 +327,21 @@
         </div>`;
       document.getElementById('sections-container').appendChild(div); lucide.createIcons(); updateUI(s.id);
     }
+
+    function installPWA() {
+      if (window.deferredPrompt) {
+        window.deferredPrompt.prompt();
+        window.deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('PWA install accepted');
+          }
+          window.deferredPrompt = null;
+        });
+      } else {
+        alert("Install prompt not available.\n\nOn mobile: use the browser's menu → Add to Home Screen\nOn desktop: look for install icon in address bar");
+      }
+    }
+
     if (window.__SAVED_PROJECT__) {
       projectName = window.__SAVED_PROJECT__.projectName;
       document.getElementById('project-name').value = projectName;
