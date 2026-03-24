@@ -79,8 +79,8 @@
   </div>
 
   <div class="mt-10 text-center no-print">
-    <button 
-      onclick="installPWA()" 
+    <button
+      onclick="installPWA()"
       class="inline-flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-xl font-semibold shadow-md transition"
     >
       <i data-lucide="download" class="w-5 h-5"></i>
@@ -88,7 +88,6 @@
     </button>
   </div>
 
-  <!-- Help modal, Dormer modal, and all scripts remain exactly the same as before -->
   <div id="help-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-overlay">
     <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
       <div class="p-6">
@@ -164,14 +163,41 @@ function calculate(s) {
   if (cov <= 0 || (r <= 0 && e <= 0)) return null;
   const maxW = Math.max(r, e), totalP = Math.ceil(maxW / cov), data = [];
   const hDiff = Math.abs(r - e), slope = hDiff > 0 ? h / hDiff : 0;
+
+  // For 'both' (centered gable): pre-compute the flat zone boundaries
+  const minRE = Math.min(r, e);
+  const flatStart = (maxW - minRE) / 2;
+  const flatEnd = flatStart + minRE;
+
   for (let i = 0; i < totalP; i++) {
     let startX, endX;
     if (s.config === 'left') { startX = maxW - ((i + 1) * cov); endX = maxW - (i * cov); }
     else if (s.config === 'both') { startX = (maxW / 2) - ((totalP / 2 - i) * cov); endX = startX + cov; }
     else { startX = i * cov; endX = (i + 1) * cov; }
+
     let base;
-    if (s.config === 'left') { base = endX < (maxW - Math.min(r,e)) ? h - ((maxW - Math.min(r,e) - endX) * slope) : h; }
-    else { base = startX < Math.min(r,e) ? h : h - ((startX - Math.min(r,e)) * slope); }
+    if (s.config === 'both') {
+      // Symmetric calculation: use endX for left side (mirrors how 'left' config uses endX),
+      // and startX for right side — this ensures odd panel counts stay perfectly symmetric
+      if (startX < flatStart) {
+        // Left angled region: distance of endX from flat zone start
+        const distIntoAngle = flatStart - Math.min(endX, flatStart);
+        base = h - (distIntoAngle * slope);
+      } else if (startX >= flatEnd) {
+        // Right angled region: distance of startX from flat zone end
+        const distIntoAngle = startX - flatEnd;
+        base = h - (distIntoAngle * slope);
+      } else {
+        // Flat center zone
+        base = h;
+      }
+      base = Math.max(0, base);
+    } else if (s.config === 'left') {
+      base = endX < (maxW - Math.min(r,e)) ? h - ((maxW - Math.min(r,e) - endX) * slope) : h;
+    } else {
+      base = startX < Math.min(r,e) ? h : h - ((startX - Math.min(r,e)) * slope);
+    }
+
     if (s.hasDormer) {
       const d = s.dormer, dR = d.left + d.width;
       if (startX >= d.left && endX <= dR) {
@@ -187,6 +213,7 @@ function calculate(s) {
   }
   return { panelData: data, maxW, coverage: cov };
 }
+
     function updateSummary() {
       let grandP = 0, grandIn = 0, grandSq = 0, tRidge = 0, tEave = 0, tVal = 0, tHip = 0, tGable = 0, tEndWall = 0, tSideWall = 0, mechSq = 0;
       sections.forEach(s => {
