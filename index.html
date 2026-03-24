@@ -159,7 +159,7 @@
       window.deferredPrompt = e;
     });
 
- function calculate(s) {
+function calculate(s) {
   const cov = parseFloat(s.coverage)||0, 
         r = parseFloat(s.ridge)||0, 
         e = parseFloat(s.eave)||0, 
@@ -179,22 +179,21 @@
     let startX = i * cov;
     let endX = (i + 1) * cov;
 
-    let base;
+    let base = h;   // default full height
+
     if (s.config === 'both') {
-      // FINAL FIX: panel length determined by its LONGEST (highest) point
-      // This gives exactly the number of full-height panels needed to cover the ridge
       const center = maxW / 2;
       const ridge_half = r / 2;
 
-      // The highest point inside this panel
-      let highestX;
-      if (endX <= center) {
-        highestX = endX;           // left side → right edge is highest
-      } else if (startX >= center) {
-        highestX = startX;         // right side → left edge is highest
-      } else {
-        highestX = center;         // panel straddles center
-      }
+      // Use the HIGHEST point inside the panel (long side)
+      let highestX = center;   // default to center
+
+      if (endX < center) {
+        highestX = endX;                    // left side panel
+      } else if (startX > center) {
+        highestX = startX;                  // right side panel
+      } 
+      // else panel crosses center → use center
 
       const distFromRidgeEdge = Math.max(0, Math.abs(highestX - center) - ridge_half);
       base = h - (distFromRidgeEdge * slope);
@@ -206,7 +205,7 @@
       base = startX < Math.min(r,e) ? h : h - ((startX - Math.min(r,e)) * slope);
     }
 
-    // Dormer handling — unchanged
+    // Dormer handling — completely unchanged
     if (s.hasDormer) {
       const d = s.dormer, dR = d.left + d.width;
       if (startX >= d.left && endX <= dR) {
