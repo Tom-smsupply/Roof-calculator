@@ -160,64 +160,31 @@
     });
 
 function calculate(s) {
-  const cov = parseFloat(s.coverage)||0, 
-        r = parseFloat(s.ridge)||0, 
-        e = parseFloat(s.eave)||0, 
-        h = parseFloat(s.height)||0, 
-        fold = parseFloat(s.eaveFold)||0;
-
+  const cov = parseFloat(s.coverage)||0, r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0, h = parseFloat(s.height)||0, fold = parseFloat(s.eaveFold)||0;
   if (cov <= 0 || (r <= 0 && e <= 0)) return null;
-
-  const maxW = Math.max(r, e);
-  const totalP = Math.ceil(maxW / cov);
-  const data = [];
-
-  const runPerSide = (maxW - Math.min(r, e)) / 2;
-  const slope = runPerSide > 0 ? h / runPerSide : 0;
-
+  const maxW = Math.max(r, e), totalP = Math.ceil(maxW / cov), data = [];
+  const hDiff = Math.abs(r - e), slope = hDiff > 0 ? h / hDiff : 0;
   for (let i = 0; i < totalP; i++) {
-    let startX = i * cov;
-    let endX = (i + 1) * cov;
-
-    let base = h;
-
-    if (s.config === 'both') {
-      const center = maxW / 2;
-      const ridge_half = r / 2;
-
-      // Highest point inside this panel (long side)
-      let highestX = center;
-      if (endX <= center) highestX = endX;           // left side
-      else if (startX >= center) highestX = startX;  // right side
-      // else crosses center → use center
-
-      const dist = Math.max(0, Math.abs(highestX - center) - ridge_half);
-      base = h - (dist * slope);
-    }
-    else if (s.config === 'left') {
-      base = endX < (maxW - Math.min(r,e)) ? h - ((maxW - Math.min(r,e) - endX) * slope) : h;
-    }
-    else {  // 'right' or default
-      base = startX < Math.min(r,e) ? h : h - ((startX - Math.min(r,e)) * slope);
-    }
-
-    // Dormer handling — untouched
+    let startX, endX;
+    if (s.config === 'left') { startX = maxW - ((i + 1) * cov); endX = maxW - (i * cov); }
+    else if (s.config === 'both') { startX = (maxW / 2) - ((totalP / 2 - i) * cov); endX = startX + cov; }
+    else { startX = i * cov; endX = (i + 1) * cov; }
+    let base;
+    if (s.config === 'left') { base = endX < (maxW - Math.min(r,e)) ? h - ((maxW - Math.min(r,e) - endX) * slope) : h; }
+    else { base = startX < Math.min(r,e) ? h : h - ((startX - Math.min(r,e)) * slope); }
     if (s.hasDormer) {
       const d = s.dormer, dR = d.left + d.width;
       if (startX >= d.left && endX <= dR) {
         data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: startX });
-        const pH = h - d.bottom - d.top;
-        const mid = d.left + d.width / 2;
+        const pH = h - d.bottom - d.top, mid = d.left + d.width / 2;
         const getDH = (x) => Math.max(0, pH * (1 - Math.abs(x - mid) / (d.width / 2)));
         const minDormerHeight = Math.min(getDH(startX), getDH(endX));
         data.push({ len: Math.ceil(d.top + (pH - minDormerHeight)), type: 'over', xPos: startX });
         continue;
       }
     }
-
     data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard', xPos: startX });
   }
-
   return { panelData: data, maxW, coverage: cov };
 }
     function updateSummary() {
