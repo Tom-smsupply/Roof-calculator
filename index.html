@@ -176,26 +176,27 @@
   const slope = runPerSide > 0 ? h / runPerSide : 0;
 
   for (let i = 0; i < totalP; i++) {
-    let startX, endX;
-
-    if (s.config === 'left') { 
-      startX = maxW - ((i + 1) * cov); 
-      endX = maxW - (i * cov); 
-    }
-    else if (s.config === 'both') { 
-      startX = (maxW / 2) - ((totalP / 2 - i) * cov); 
-      endX = startX + cov;
-    }
-    else { 
-      startX = i * cov; 
-      endX = (i + 1) * cov; 
-    }
+    let startX = i * cov;
+    let endX = (i + 1) * cov;
 
     let base;
     if (s.config === 'both') {
-      // Use the LONG (outer) edge of the panel — this is the key fix you needed
-      const outerEdge = Math.max(Math.abs(startX), Math.abs(endX));
-      const distFromRidgeEdge = Math.max(0, outerEdge - r/2);
+      // FINAL FIX: panel length determined by its LONGEST (highest) point
+      // This gives exactly the number of full-height panels needed to cover the ridge
+      const center = maxW / 2;
+      const ridge_half = r / 2;
+
+      // The highest point inside this panel
+      let highestX;
+      if (endX <= center) {
+        highestX = endX;           // left side → right edge is highest
+      } else if (startX >= center) {
+        highestX = startX;         // right side → left edge is highest
+      } else {
+        highestX = center;         // panel straddles center
+      }
+
+      const distFromRidgeEdge = Math.max(0, Math.abs(highestX - center) - ridge_half);
       base = h - (distFromRidgeEdge * slope);
     }
     else if (s.config === 'left') {
@@ -205,12 +206,7 @@
       base = startX < Math.min(r,e) ? h : h - ((startX - Math.min(r,e)) * slope);
     }
 
-    const panelLen = Math.max(0, Math.ceil(base + fold));
-
-    // Skip zero-length panels on the far side
-    if (panelLen <= 0) continue;
-
-    // Dormer handling — left completely untouched
+    // Dormer handling — unchanged
     if (s.hasDormer) {
       const d = s.dormer, dR = d.left + d.width;
       if (startX >= d.left && endX <= dR) {
@@ -224,7 +220,7 @@
       }
     }
 
-    data.push({ len: panelLen, type: 'standard', xPos: startX });
+    data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard', xPos: startX });
   }
 
   return { panelData: data, maxW, coverage: cov };
