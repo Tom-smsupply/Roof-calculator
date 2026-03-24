@@ -172,7 +172,7 @@
   const totalP = Math.ceil(maxW / cov);
   const data = [];
 
-  const runPerSide = (maxW - Math.min(r, e)) / 2;   // horizontal run each side (180" here)
+  const runPerSide = (maxW - Math.min(r, e)) / 2;
   const slope = runPerSide > 0 ? h / runPerSide : 0;
 
   for (let i = 0; i < totalP; i++) {
@@ -193,9 +193,8 @@
 
     let base;
     if (s.config === 'both') {
-      // FIXED: use the LONG side (outer edge) of the panel to determine length
-      // This is what actually sets how much the panel drops on the slope
-      const outerEdge = Math.max(Math.abs(startX), Math.abs(endX));   // farthest point from center
+      // Use the LONG (outer) edge of the panel — this is the key fix you needed
+      const outerEdge = Math.max(Math.abs(startX), Math.abs(endX));
       const distFromRidgeEdge = Math.max(0, outerEdge - r/2);
       base = h - (distFromRidgeEdge * slope);
     }
@@ -206,7 +205,12 @@
       base = startX < Math.min(r,e) ? h : h - ((startX - Math.min(r,e)) * slope);
     }
 
-    // Dormer handling — completely unchanged as requested
+    const panelLen = Math.max(0, Math.ceil(base + fold));
+
+    // Skip zero-length panels on the far side
+    if (panelLen <= 0) continue;
+
+    // Dormer handling — left completely untouched
     if (s.hasDormer) {
       const d = s.dormer, dR = d.left + d.width;
       if (startX >= d.left && endX <= dR) {
@@ -220,7 +224,7 @@
       }
     }
 
-    data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard', xPos: startX });
+    data.push({ len: panelLen, type: 'standard', xPos: startX });
   }
 
   return { panelData: data, maxW, coverage: cov };
