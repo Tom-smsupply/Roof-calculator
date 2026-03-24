@@ -159,7 +159,7 @@
       window.deferredPrompt = e;
     });
 
-  function calculate(s) {
+ function calculate(s) {
   const cov = parseFloat(s.coverage)||0, 
         r = parseFloat(s.ridge)||0, 
         e = parseFloat(s.eave)||0, 
@@ -172,8 +172,8 @@
   const totalP = Math.ceil(maxW / cov);
   const data = [];
 
-  const hDiff = Math.abs(r - e);
-  const slope = hDiff > 0 ? h / hDiff : 0;
+  const runPerSide = (maxW - Math.min(r, e)) / 2;   // 180" in your example
+  const slope = runPerSide > 0 ? h / runPerSide : 0; // rise per inch of horizontal run
 
   for (let i = 0; i < totalP; i++) {
     let startX, endX;
@@ -183,7 +183,6 @@
       endX = maxW - (i * cov); 
     }
     else if (s.config === 'both') { 
-      // FIXED: proper centered gable calculation
       startX = (maxW / 2) - ((totalP / 2 - i) * cov); 
       endX = startX + cov;
     }
@@ -194,14 +193,10 @@
 
     let base;
     if (s.config === 'both') {
-      // NEW correct logic for centered gable
-      const distFromCenter = Math.abs(startX + cov/2 - maxW/2);
-      const halfDiff = hDiff / 2;
-      base = h - (distFromCenter * slope);
-      // but never go below the shorter side
-      if (r !== e) {
-        base = Math.max(base, h - halfDiff);
-      }
+      // Correct centered gable: flat across the ridge, then slope down each side
+      const panelCenter = startX + cov / 2;
+      const distFromRidgeEdge = Math.max(0, Math.abs(panelCenter) - r/2);  // distance beyond the ridge
+      base = h - (distFromRidgeEdge * slope);
     }
     else if (s.config === 'left') {
       base = endX < (maxW - Math.min(r,e)) ? h - ((maxW - Math.min(r,e) - endX) * slope) : h;
@@ -210,7 +205,7 @@
       base = startX < Math.min(r,e) ? h : h - ((startX - Math.min(r,e)) * slope);
     }
 
-    // Dormer handling — left completely unchanged
+    // Dormer handling — completely unchanged
     if (s.hasDormer) {
       const d = s.dormer, dR = d.left + d.width;
       if (startX >= d.left && endX <= dR) {
