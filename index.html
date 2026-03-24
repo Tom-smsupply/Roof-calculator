@@ -179,33 +179,29 @@ function calculate(s) {
     let startX = i * cov;
     let endX = (i + 1) * cov;
 
-    let base = h;   // default full height
+    let base = h;
 
     if (s.config === 'both') {
       const center = maxW / 2;
       const ridge_half = r / 2;
 
-      // Use the HIGHEST point inside the panel (long side)
-      let highestX = center;   // default to center
+      // Highest point inside this panel (long side)
+      let highestX = center;
+      if (endX <= center) highestX = endX;           // left side
+      else if (startX >= center) highestX = startX;  // right side
+      // else crosses center → use center
 
-      if (endX < center) {
-        highestX = endX;                    // left side panel
-      } else if (startX > center) {
-        highestX = startX;                  // right side panel
-      } 
-      // else panel crosses center → use center
-
-      const distFromRidgeEdge = Math.max(0, Math.abs(highestX - center) - ridge_half);
-      base = h - (distFromRidgeEdge * slope);
+      const dist = Math.max(0, Math.abs(highestX - center) - ridge_half);
+      base = h - (dist * slope);
     }
     else if (s.config === 'left') {
       base = endX < (maxW - Math.min(r,e)) ? h - ((maxW - Math.min(r,e) - endX) * slope) : h;
     }
-    else {
+    else {  // 'right' or default
       base = startX < Math.min(r,e) ? h : h - ((startX - Math.min(r,e)) * slope);
     }
 
-    // Dormer handling — completely unchanged
+    // Dormer handling — untouched
     if (s.hasDormer) {
       const d = s.dormer, dR = d.left + d.width;
       if (startX >= d.left && endX <= dR) {
