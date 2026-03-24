@@ -172,8 +172,8 @@
   const totalP = Math.ceil(maxW / cov);
   const data = [];
 
-  const runPerSide = (maxW - Math.min(r, e)) / 2;   // 180" in your example
-  const slope = runPerSide > 0 ? h / runPerSide : 0; // rise per inch of horizontal run
+  const runPerSide = (maxW - Math.min(r, e)) / 2;   // horizontal run each side (180" here)
+  const slope = runPerSide > 0 ? h / runPerSide : 0;
 
   for (let i = 0; i < totalP; i++) {
     let startX, endX;
@@ -193,9 +193,10 @@
 
     let base;
     if (s.config === 'both') {
-      // Correct centered gable: flat across the ridge, then slope down each side
-      const panelCenter = startX + cov / 2;
-      const distFromRidgeEdge = Math.max(0, Math.abs(panelCenter) - r/2);  // distance beyond the ridge
+      // FIXED: use the LONG side (outer edge) of the panel to determine length
+      // This is what actually sets how much the panel drops on the slope
+      const outerEdge = Math.max(Math.abs(startX), Math.abs(endX));   // farthest point from center
+      const distFromRidgeEdge = Math.max(0, outerEdge - r/2);
       base = h - (distFromRidgeEdge * slope);
     }
     else if (s.config === 'left') {
@@ -205,7 +206,7 @@
       base = startX < Math.min(r,e) ? h : h - ((startX - Math.min(r,e)) * slope);
     }
 
-    // Dormer handling — completely unchanged
+    // Dormer handling — completely unchanged as requested
     if (s.hasDormer) {
       const d = s.dormer, dR = d.left + d.width;
       if (startX >= d.left && endX <= dR) {
