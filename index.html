@@ -159,34 +159,76 @@
       window.deferredPrompt = e;
     });
 
-    function calculate(s) {
-      const cov = parseFloat(s.coverage)||0, r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0, h = parseFloat(s.height)||0, fold = parseFloat(s.eaveFold)||0;
-      if (cov <= 0 || (r <= 0 && e <= 0)) return null;
-      const maxW = Math.max(r, e), totalP = Math.ceil(maxW / cov), data = [];
-      const hDiff = Math.abs(r - e), slope = hDiff > 0 ? h / hDiff : 0;
-      for (let i = 0; i < totalP; i++) {
-        let startX, endX;
-        if (s.config === 'left') { startX = maxW - ((i + 1) * cov); endX = maxW - (i * cov); }
-        else if (s.config === 'both') { startX = (maxW / 2) - ((totalP / 2 - i) * cov); endX = startX + cov; }
-        else { startX = i * cov; endX = (i + 1) * cov; }
-        let base;
-        if (s.config === 'left') { base = endX < (maxW - Math.min(r,e)) ? h - ((maxW - Math.min(r,e) - endX) * slope) : h; }
-        else { base = startX < Math.min(r,e) ? h : h - ((startX - Math.min(r,e)) * slope); }
-        if (s.hasDormer) {
-          const d = s.dormer, dR = d.left + d.width;
-          if (startX >= d.left && endX <= dR) {
-            data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: startX });
-            const pH = h - d.bottom - d.top, mid = d.left + d.width / 2;
-            const getDH = (x) => Math.max(0, pH * (1 - Math.abs(x - mid) / (d.width / 2)));
-            const minDormerHeight = Math.min(getDH(startX), getDH(endX));
-            data.push({ len: Math.ceil(d.top + (pH - minDormerHeight)), type: 'over', xPos: startX });
-            continue;
-          }
-        }
-        data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard', xPos: startX });
-      }
-      return { panelData: data, maxW, coverage: cov };
+  function calculate(s) {
+  const cov = parseFloat(s.coverage)||0, 
+        r = parseFloat(s.ridge)||0, 
+        e = parseFloat(s.eave)||0, 
+        h = parseFloat(s.height)||0, 
+        fold = parseFloat(s.eaveFold)||0;
+
+  if (cov <= 0 || (r <= 0 && e <= 0)) return null;
+
+  const maxW = Math.max(r, e);
+  const totalP = Math.ceil(maxW / cov);
+  const data = [];
+
+  const hDiff = Math.abs(r - e);
+  const slope = hDiff > 0 ? h / hDiff : 0;
+
+  for (let i = 0; i < totalP; i++) {
+    let startX, endX;
+
+    if (s.config === 'left') { 
+      startX = maxW - ((i + 1) * cov); 
+      endX = maxW - (i * cov); 
     }
+    else if (s.config === 'both') { 
+      // FIXED: proper centered gable calculation
+      startX = (maxW / 2) - ((totalP / 2 - i) * cov); 
+      endX = startX + cov;
+    }
+    else { 
+      startX = i * cov; 
+      endX = (i + 1) * cov; 
+    }
+
+    let base;
+    if (s.config === 'both') {
+      // NEW correct logic for centered gable
+      const distFromCenter = Math.abs(startX + cov/2 - maxW/2);
+      const halfDiff = hDiff / 2;
+      base = h - (distFromCenter * slope);
+      // but never go below the shorter side
+      if (r !== e) {
+        base = Math.max(base, h - halfDiff);
+      }
+    }
+    else if (s.config === 'left') {
+      base = endX < (maxW - Math.min(r,e)) ? h - ((maxW - Math.min(r,e) - endX) * slope) : h;
+    }
+    else {
+      base = startX < Math.min(r,e) ? h : h - ((startX - Math.min(r,e)) * slope);
+    }
+
+    // Dormer handling — left completely unchanged
+    if (s.hasDormer) {
+      const d = s.dormer, dR = d.left + d.width;
+      if (startX >= d.left && endX <= dR) {
+        data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: startX });
+        const pH = h - d.bottom - d.top;
+        const mid = d.left + d.width / 2;
+        const getDH = (x) => Math.max(0, pH * (1 - Math.abs(x - mid) / (d.width / 2)));
+        const minDormerHeight = Math.min(getDH(startX), getDH(endX));
+        data.push({ len: Math.ceil(d.top + (pH - minDormerHeight)), type: 'over', xPos: startX });
+        continue;
+      }
+    }
+
+    data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard', xPos: startX });
+  }
+
+  return { panelData: data, maxW, coverage: cov };
+}
     function updateSummary() {
       let grandP = 0, grandIn = 0, grandSq = 0, tRidge = 0, tEave = 0, tVal = 0, tHip = 0, tGable = 0, tEndWall = 0, tSideWall = 0, mechSq = 0;
       sections.forEach(s => {
