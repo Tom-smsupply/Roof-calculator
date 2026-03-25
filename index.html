@@ -7,12 +7,12 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@latest/font/lucide.css"/>
   <style>
-    body { font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; overscroll-behavior-y: contain; }
+    body { font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; }
     input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-    .input-field { border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.5rem 0.75rem; width: 100%; transition: all 0.2s; }
+    .input-field { border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.5rem 0.75rem; width: 100%; transition: all 0.2s; font-size: 0.875rem; }
     .input-field:focus { border-color: #3b82f6; outline: 2px solid #dbeafe; }
     .section-label { background: white; border: 3px solid #1e40af; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); font-size: 2.25rem; font-weight: 900; letter-spacing: -2px; padding: 14px 32px; border-radius: 9999px; min-width: 180px; text-align: center; }
-    .calc-highlight { background-color: #eff6ff !important; color: #1e40af !important; font-weight: bold; }
+    .calc-box { background-color: #eff6ff !important; border-color: #3b82f6 !important; font-weight: 800; color: #1e40af; }
     @media print { .no-print { display: none !important; } .print-only { display: block !important; } }
   </style>
 </head>
@@ -20,9 +20,7 @@
   <div class="max-w-7xl mx-auto">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-6">
       <div class="flex-1">
-        <div class="flex flex-col md:flex-row md:items-baseline gap-2 md:gap-4 mb-1">
-            <div class="text-blue-700 text-3xl md:text-4xl font-extrabold tracking-[-2px]">SUMMIT METAL SUPPLY</div>
-        </div>
+        <div class="text-blue-700 text-3xl md:text-4xl font-extrabold tracking-[-2px]">SUMMIT METAL SUPPLY</div>
         <h1 class="text-2xl md:text-3xl font-bold text-slate-900">Roof Calculator</h1>
         <div class="mt-3 flex items-center gap-3">
           <span class="font-semibold text-slate-600">Project Name:</span>
@@ -36,10 +34,21 @@
     </div>
 
     <div id="summary-container" class="mb-8 bg-blue-900 text-white rounded-xl p-4 md:p-6 shadow-lg">
+      <h2 class="text-xl font-bold mb-6 flex items-center gap-2">Project Totals</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-blue-800/40 p-4 rounded-lg"><p class="text-blue-200 text-xs uppercase font-black">Total Panels</p><p id="total-panels" class="text-3xl font-bold">0</p></div>
         <div class="bg-blue-800/40 p-4 rounded-lg"><p class="text-blue-200 text-xs uppercase font-black">Total Linear Feet</p><p class="text-3xl font-bold"><span id="total-linear-ft">0.0</span> ft</p></div>
         <div class="bg-blue-800/40 p-4 rounded-lg"><p class="text-blue-200 text-xs uppercase font-black">Total Square Feet</p><p class="text-3xl font-bold"><span id="total-sq-ft">0</span></p></div>
+      </div>
+      <div class="mt-6 pt-6 border-t border-blue-800/30">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div class="bg-blue-800/40 p-3 rounded-lg"><p class="text-xs">Ridge Caps</p><p id="ridge-caps" class="text-xl font-bold">0</p></div>
+          <div class="bg-blue-800/40 p-3 rounded-lg"><p class="text-xs">Eave Trims</p><p id="eave-trims" class="text-xl font-bold">0</p></div>
+          <div class="bg-blue-800/40 p-3 rounded-lg"><p class="text-xs">Valley Flash</p><p id="valley-flashing" class="text-xl font-bold">0</p></div>
+          <div class="bg-blue-800/40 p-3 rounded-lg"><p class="text-xs">Hip Caps</p><p id="hip-caps" class="text-xl font-bold">0</p></div>
+          <div class="bg-blue-800/40 p-3 rounded-lg"><p class="text-xs">Gable Trim</p><p id="gable-trim" class="text-xl font-bold">0</p></div>
+          <div class="bg-blue-800/40 p-3 rounded-lg"><p class="text-xs">Screws</p><p id="total-screws" class="text-xl font-bold">0</p></div>
+        </div>
       </div>
     </div>
 
@@ -66,65 +75,56 @@
     let activeDormerId = null, projectName = '', sections = [], lastProfile = 'tuff', lastPitch = 4;
 
     function calculate(s) {
-      const cov = parseFloat(s.coverage)||0, r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0, fold = parseFloat(s.eaveFold)||0;
+      const r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0, cov = parseFloat(s.coverage)||36, fold = parseFloat(s.eaveFold)||0;
       let h = parseFloat(s.height);
 
-      // Trig Calculation Logic
+      // Height Calculation Logic
       if (isNaN(h) || h <= 0) {
-          if (s.hipLen > 0) {
-              const runDiff = Math.abs(r - e);
-              const pitch = parseFloat(s.pitch) || 0;
-              const slopeFactor = Math.sqrt(1 + Math.pow(pitch / 12, 2));
-              h = Math.sqrt(Math.pow(s.hipLen, 2) - Math.pow(runDiff, 2)) / slopeFactor;
-              
-              const hInput = document.getElementById(`height-input-${s.id}`);
-              if (hInput) {
-                  hInput.placeholder = h.toFixed(2) + '"';
-                  hInput.classList.add('calc-highlight');
-              }
-          }
-      } else {
+        if (s.hipLen > 0) {
+          const runDiff = Math.abs(r - e);
+          const slopeFactor = Math.sqrt(1 + Math.pow(parseFloat(s.pitch)/12, 2));
+          h = Math.sqrt(Math.pow(s.hipLen, 2) - Math.pow(runDiff, 2)) / slopeFactor;
+          
           const hInput = document.getElementById(`height-input-${s.id}`);
-          if (hInput) {
-              hInput.placeholder = "Manual";
-              hInput.classList.remove('calc-highlight');
-          }
+          if(hInput) { hInput.value = h.toFixed(2); hInput.classList.add('calc-box'); }
+        }
+      } else {
+        const hInput = document.getElementById(`height-input-${s.id}`);
+        if(hInput) hInput.classList.remove('calc-box');
       }
 
       if (cov <= 0 || (r <= 0 && e <= 0) || h <= 0 || isNaN(h)) return null;
 
       const maxW = Math.max(r, e), totalP = Math.ceil(maxW / cov), data = [];
       const hDiff = Math.abs(r - e), slope = hDiff > 0 ? h / hDiff : 0;
-      const minRE = Math.min(r, e), flatStart = (maxW - minRE) / 2, flatEnd = flatStart + minRE;
+      const minRE = Math.min(r, e), flatStart = (maxW - minRE) / 2;
 
       for (let i = 0; i < totalP; i++) {
-        let startX, endX;
-        if (s.config === 'left') { startX = maxW - ((i + 1) * cov); endX = maxW - (i * cov); }
-        else if (s.config === 'both') { startX = (maxW / 2) - ((totalP / 2 - i) * cov); endX = startX + cov; }
-        else { startX = i * cov; endX = (i + 1) * cov; }
+        let startX;
+        if (s.config === 'left') { startX = maxW - ((i + 1) * cov); }
+        else if (s.config === 'both') { startX = (maxW / 2) - ((totalP / 2 - i) * cov); }
+        else { startX = i * cov; }
 
         let base;
         if (s.config === 'both') {
-          if (startX < flatStart) {
-            const distIntoAngle = flatStart - Math.min(endX, flatStart);
-            base = h - (distIntoAngle * slope);
-          } else if (startX >= flatEnd) {
-            const distIntoAngle = startX - flatEnd;
-            base = h - (distIntoAngle * slope);
-          } else { base = h; }
+          const flatEnd = flatStart + minRE;
+          const endX = startX + cov;
+          if (startX < flatStart) { base = h - ((flatStart - Math.min(endX, flatStart)) * slope); }
+          else if (startX >= flatEnd) { base = h - ((startX - flatEnd) * slope); }
+          else { base = h; }
         } else if (s.config === 'left') {
+          const endX = startX + cov;
           base = endX < (maxW - minRE) ? h - ((maxW - minRE - endX) * slope) : h;
         } else {
           base = startX < minRE ? h : h - ((startX - minRE) * slope);
         }
 
         if (s.hasDormer) {
-          const d = s.dormer, dR = d.left + d.width;
-          if (startX >= d.left && endX <= dR) {
-            data.push({ len: Math.ceil(d.bottom + fold), type: 'under' });
-            const pH = h - d.bottom - d.top;
-            data.push({ len: Math.ceil(d.top + (pH * 0.5)), type: 'over' }); // simplified dormer height logic
-            continue;
+          const d = s.dormer;
+          if (startX >= d.left && (startX + cov) <= (d.left + d.width)) {
+             data.push({ len: Math.ceil(d.bottom + fold), type: 'dormer' });
+             data.push({ len: Math.ceil(h - d.bottom - d.top + fold), type: 'dormer' });
+             continue;
           }
         }
         data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard' });
@@ -133,19 +133,25 @@
     }
 
     function updateSummary() {
-      let grandP = 0, grandIn = 0, grandSq = 0;
+      let tP = 0, tIn = 0, tSq = 0, tR = 0, tE = 0, tV = 0, tH = 0, tG = 0;
       sections.forEach(s => {
         const res = calculate(s);
         if (res) {
-          grandP += res.panelData.length;
+          tP += res.panelData.length;
           const sIn = res.panelData.reduce((sum, p) => sum + p.len, 0);
-          grandIn += sIn;
-          grandSq += (sIn / 12) * (res.coverage / 12);
+          tIn += sIn; tSq += (sIn / 12) * (res.coverage / 12);
+          tR += parseFloat(s.ridge)||0; tE += parseFloat(s.eave)||0;
+          const sideH = res.finalH;
+          if (s.config === 'both') { tG += sideH * 2; } else { tG += sideH; }
         }
       });
-      document.getElementById('total-panels').innerText = grandP;
-      document.getElementById('total-linear-ft').innerText = (grandIn / 12).toFixed(1);
-      document.getElementById('total-sq-ft').innerText = Math.ceil(grandSq);
+      document.getElementById('total-panels').innerText = tP;
+      document.getElementById('total-linear-ft').innerText = (tIn / 12).toFixed(1);
+      document.getElementById('total-sq-ft').innerText = Math.ceil(tSq);
+      document.getElementById('ridge-caps').innerText = Math.ceil(tR / 120);
+      document.getElementById('eave-trims').innerText = Math.ceil(tE / 120);
+      document.getElementById('gable-trim').innerText = Math.ceil(tG / 120);
+      document.getElementById('total-screws').innerText = Math.ceil(tSq);
     }
 
     function updateUI(id) {
@@ -163,7 +169,7 @@
       
       let counts = {};
       res.panelData.forEach(p => counts[p.len] = (counts[p.len] || 0) + 1);
-      list.innerHTML = `<table class="w-full text-xs">` + Object.entries(counts).map(([len, qty]) => `<tr class="border-b"><td class="p-2 font-bold">${qty}</td><td class="p-2 text-right">${len}"</td></tr>`).join('') + `</table>`;
+      list.innerHTML = `<table class="w-full text-xs">` + Object.entries(counts).map(([len, qty]) => `<tr class="border-b"><td class="p-2 font-bold">${qty}x</td><td class="p-2 text-right">${len}"</td></tr>`).join('') + `</table>`;
       updateSummary();
     }
 
@@ -176,13 +182,14 @@
       div.innerHTML = `
         <div class="p-4 bg-slate-50 border-b flex flex-wrap justify-between items-center gap-4">
           <input type="text" value="${s.name}" class="section-label" oninput="updateVal(${s.id}, 'name', this.value)">
-          <div class="flex gap-2 no-print">
-            <button onclick="toggleDormer(${s.id})" class="bg-white border px-3 py-1 rounded text-xs font-bold">Dormer</button>
-            <button onclick="removeSection(${s.id})" class="text-red-500"><i data-lucide="trash-2"></i></button>
+          <div class="flex gap-4 no-print items-center">
+            <label class="flex items-center gap-2 font-bold text-sm"><input type="checkbox" onchange="toggleDormer(${s.id}, this.checked)"> Dormer</label>
+            <label class="flex items-center gap-2 font-bold text-sm text-orange-600"><input type="checkbox"> Top Wall</label>
+            <button onclick="removeSection(${s.id})" class="text-red-500 font-bold">Remove</button>
           </div>
         </div>
         <div class="p-4">
-          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-4">
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
             <div><label class="text-[10px] font-bold uppercase text-slate-400">Ridge (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'ridge', parseFloat(this.value))"></div>
             <div><label class="text-[10px] font-bold uppercase text-slate-400">Eave (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'eave', parseFloat(this.value))"></div>
             <div><label class="text-[10px] font-bold uppercase text-slate-400">Pitch (/12)</label><input type="number" class="input-field" value="${s.pitch}" oninput="updateVal(${s.id}, 'pitch', parseFloat(this.value))"></div>
@@ -190,7 +197,9 @@
             <div><label class="text-[10px] font-bold uppercase text-slate-400">Height (In)</label><input type="number" id="height-input-${s.id}" class="input-field" oninput="updateVal(${s.id}, 'height', parseFloat(this.value))"></div>
             <div><label class="text-[10px] font-bold uppercase text-slate-400">Profile</label>
               <select class="input-field" onchange="updateProfile(${s.id}, this.value)">
-                <option value="tuff">Tuff (36")</option><option value="mechanical">Mech (15.75")</option><option value="diamond">Diamond (36")</option>
+                <option value="tuff" ${s.profile==='tuff'?'selected':''}>Tuff (36")</option>
+                <option value="mechanical" ${s.profile==='mechanical'?'selected':''}>Mech (15.75")</option>
+                <option value="diamond" ${s.profile==='diamond'?'selected':''}>Diamond (36")</option>
               </select>
             </div>
             <div><label class="text-[10px] font-bold uppercase text-slate-400">Fold (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'eaveFold', parseFloat(this.value))"></div>
@@ -199,12 +208,11 @@
             </div>
           </div>
           <div class="grid lg:grid-cols-4 gap-4">
-            <div class="lg:col-span-3 bg-slate-50 border rounded-xl flex items-center justify-center p-4"><svg id="svg-${s.id}" viewBox="0 0 800 300" class="w-full"></svg></div>
-            <div id="list-${s.id}" class="border rounded-xl bg-white overflow-hidden p-2"></div>
+            <div class="lg:col-span-3 bg-slate-50 border rounded-xl min-h-[300px] flex items-center justify-center"><svg id="svg-${s.id}" viewBox="0 0 800 300" class="w-full h-full"></svg></div>
+            <div id="list-${s.id}" class="border rounded-xl bg-white p-2"></div>
           </div>
         </div>`;
       document.getElementById('sections-container').appendChild(div);
-      lucide.createIcons();
       updateUI(s.id);
     }
 
@@ -217,10 +225,11 @@
     function updateProfile(id, val) {
       const s = sections.find(x => x.id === id);
       s.profile = val; s.coverage = (val === 'mechanical' ? 15.75 : 36);
+      lastProfile = val;
       updateUI(id);
     }
     function removeSection(id) { sections = sections.filter(x => x.id !== id); document.getElementById(`section-${id}`).remove(); updateSummary(); }
-    function toggleDormer(id) { activeDormerId = id; document.getElementById('dormer-modal').classList.remove('hidden'); }
+    function toggleDormer(id, chk) { activeDormerId = id; if(chk) document.getElementById('dormer-modal').classList.remove('hidden'); else { sections.find(x => x.id === id).hasDormer = false; updateUI(id); } }
     function closeDormerModal() { document.getElementById('dormer-modal').classList.add('hidden'); sections.find(x => x.id === activeDormerId).hasDormer = true; updateUI(activeDormerId); }
     function saveDormerData() {
       const s = sections.find(x => x.id === activeDormerId);
