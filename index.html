@@ -12,7 +12,7 @@
     .input-field { border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.5rem 0.75rem; width: 100%; transition: all 0.2s; font-size: 0.875rem; }
     .input-field:focus { border-color: #3b82f6; outline: 2px solid #dbeafe; }
     .section-label { background: white; border: 3px solid #1e40af; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); font-size: 2.25rem; font-weight: 900; letter-spacing: -2px; padding: 14px 32px; border-radius: 9999px; min-width: 180px; text-align: center; }
-    .calc-box { background-color: #eff6ff !important; border-color: #3b82f6 !important; font-weight: 800; color: #1e40af; }
+    .calc-highlight { background-color: #eff6ff !important; border-color: #3b82f6 !important; font-weight: 800; color: #1e40af; }
     @media print { .no-print { display: none !important; } .print-only { display: block !important; } }
   </style>
 </head>
@@ -34,7 +34,7 @@
     </div>
 
     <div id="summary-container" class="mb-8 bg-blue-900 text-white rounded-xl p-4 md:p-6 shadow-lg">
-      <h2 class="text-xl font-bold mb-6 flex items-center gap-2">Project Totals</h2>
+      <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i data-lucide="calculator"></i> Project Totals</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-blue-800/40 p-4 rounded-lg"><p class="text-blue-200 text-xs uppercase font-black">Total Panels</p><p id="total-panels" class="text-3xl font-bold">0</p></div>
         <div class="bg-blue-800/40 p-4 rounded-lg"><p class="text-blue-200 text-xs uppercase font-black">Total Linear Feet</p><p class="text-3xl font-bold"><span id="total-linear-ft">0.0</span> ft</p></div>
@@ -78,40 +78,40 @@
       const r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0, cov = parseFloat(s.coverage)||36, fold = parseFloat(s.eaveFold)||0;
       let h = parseFloat(s.height);
 
-      // Height Calculation Logic
+      // Trigonometry Height Check
       if (isNaN(h) || h <= 0) {
         if (s.hipLen > 0) {
           const runDiff = Math.abs(r - e);
           const slopeFactor = Math.sqrt(1 + Math.pow(parseFloat(s.pitch)/12, 2));
-          h = Math.sqrt(Math.pow(s.hipLen, 2) - Math.pow(runDiff, 2)) / slopeFactor;
+          const calcH = Math.sqrt(Math.pow(s.hipLen, 2) - Math.pow(runDiff, 2)) / slopeFactor;
+          if (calcH > 0) h = calcH;
           
           const hInput = document.getElementById(`height-input-${s.id}`);
-          if(hInput) { hInput.value = h.toFixed(2); hInput.classList.add('calc-box'); }
+          if(hInput) { hInput.placeholder = h.toFixed(2); hInput.classList.add('calc-highlight'); }
         }
       } else {
         const hInput = document.getElementById(`height-input-${s.id}`);
-        if(hInput) hInput.classList.remove('calc-box');
+        if(hInput) { hInput.placeholder = "Manual"; hInput.classList.remove('calc-highlight'); }
       }
 
       if (cov <= 0 || (r <= 0 && e <= 0) || h <= 0 || isNaN(h)) return null;
 
       const maxW = Math.max(r, e), totalP = Math.ceil(maxW / cov), data = [];
       const hDiff = Math.abs(r - e), slope = hDiff > 0 ? h / hDiff : 0;
-      const minRE = Math.min(r, e), flatStart = (maxW - minRE) / 2;
+      const minRE = Math.min(r, e), flatStart = (maxW - minRE) / 2, flatEnd = flatStart + minRE;
 
       for (let i = 0; i < totalP; i++) {
         let startX;
-        if (s.config === 'left') { startX = maxW - ((i + 1) * cov); }
-        else if (s.config === 'both') { startX = (maxW / 2) - ((totalP / 2 - i) * cov); }
-        else { startX = i * cov; }
+        if (s.config === 'left') startX = maxW - ((i + 1) * cov);
+        else if (s.config === 'both') startX = (maxW / 2) - ((totalP / 2 - i) * cov);
+        else startX = i * cov;
 
         let base;
         if (s.config === 'both') {
-          const flatEnd = flatStart + minRE;
           const endX = startX + cov;
-          if (startX < flatStart) { base = h - ((flatStart - Math.min(endX, flatStart)) * slope); }
-          else if (startX >= flatEnd) { base = h - ((startX - flatEnd) * slope); }
-          else { base = h; }
+          if (startX < flatStart) base = h - ((flatStart - Math.min(endX, flatStart)) * slope);
+          else if (startX >= flatEnd) base = h - ((startX - flatEnd) * slope);
+          else base = h;
         } else if (s.config === 'left') {
           const endX = startX + cov;
           base = endX < (maxW - minRE) ? h - ((maxW - minRE - endX) * slope) : h;
@@ -121,7 +121,8 @@
 
         if (s.hasDormer) {
           const d = s.dormer;
-          if (startX >= d.left && (startX + cov) <= (d.left + d.width)) {
+          const endX = startX + cov;
+          if (startX >= d.left && endX <= (d.left + d.width)) {
              data.push({ len: Math.ceil(d.bottom + fold), type: 'dormer' });
              data.push({ len: Math.ceil(h - d.bottom - d.top + fold), type: 'dormer' });
              continue;
@@ -140,9 +141,10 @@
           tP += res.panelData.length;
           const sIn = res.panelData.reduce((sum, p) => sum + p.len, 0);
           tIn += sIn; tSq += (sIn / 12) * (res.coverage / 12);
-          tR += parseFloat(s.ridge)||0; tE += parseFloat(s.eave)||0;
+          tR += (s.topWall ? 0 : parseFloat(s.ridge)||0);
+          tE += parseFloat(s.eave)||0;
           const sideH = res.finalH;
-          if (s.config === 'both') { tG += sideH * 2; } else { tG += sideH; }
+          if (s.config === 'both') tG += sideH * 2; else tG += sideH;
         }
       });
       document.getElementById('total-panels').innerText = tP;
@@ -157,7 +159,7 @@
     function updateUI(id) {
       const s = sections.find(x => x.id === id), res = calculate(s);
       const svg = document.getElementById(`svg-${id}`), list = document.getElementById(`list-${id}`);
-      if (!res) return;
+      if (!res) { svg.innerHTML = ''; list.innerHTML = ''; return; }
 
       const w = 800, h = 300, m = 40, scale = (w-2*m)/res.maxW;
       const rW = (parseFloat(s.ridge)||0)*scale, eW = (parseFloat(s.eave)||0)*scale;
@@ -169,12 +171,13 @@
       
       let counts = {};
       res.panelData.forEach(p => counts[p.len] = (counts[p.len] || 0) + 1);
-      list.innerHTML = `<table class="w-full text-xs">` + Object.entries(counts).map(([len, qty]) => `<tr class="border-b"><td class="p-2 font-bold">${qty}x</td><td class="p-2 text-right">${len}"</td></tr>`).join('') + `</table>`;
+      list.innerHTML = `<table class="w-full text-xs"><thead><tr class="bg-slate-50 border-b"><th class="p-1 text-left">Qty</th><th class="p-1 text-right">Len</th></tr></thead><tbody>` + 
+        Object.entries(counts).map(([len, qty]) => `<tr class="border-b"><td class="p-2 font-bold">${qty}x</td><td class="p-2 text-right">${len}"</td></tr>`).join('') + `</tbody></table>`;
       updateSummary();
     }
 
     function addSection() {
-      const s = { id: Date.now(), name: String.fromCharCode(65 + sections.length), ridge: '', eave: '', height: '', pitch: lastPitch, hipLen: '', profile: lastProfile, coverage: (lastProfile==='mechanical'?15.75:36), eaveFold: 0, config: 'right', hasDormer: false, dormer: {left:0, width:0, bottom:0, top:0} };
+      const s = { id: Date.now(), name: String.fromCharCode(65 + sections.length), ridge: '', eave: '', height: '', pitch: lastPitch, hipLen: '', profile: lastProfile, coverage: (lastProfile==='mechanical'?15.75:36), eaveFold: 0, config: 'right', hasDormer: false, topWall: false, dormer: {left:0, width:0, bottom:0, top:0} };
       sections.push(s);
       const div = document.createElement('div');
       div.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8";
@@ -184,8 +187,8 @@
           <input type="text" value="${s.name}" class="section-label" oninput="updateVal(${s.id}, 'name', this.value)">
           <div class="flex gap-4 no-print items-center">
             <label class="flex items-center gap-2 font-bold text-sm"><input type="checkbox" onchange="toggleDormer(${s.id}, this.checked)"> Dormer</label>
-            <label class="flex items-center gap-2 font-bold text-sm text-orange-600"><input type="checkbox"> Top Wall</label>
-            <button onclick="removeSection(${s.id})" class="text-red-500 font-bold">Remove</button>
+            <label class="flex items-center gap-2 font-bold text-sm text-orange-600"><input type="checkbox" onchange="updateVal(${s.id}, 'topWall', this.checked)"> Top Wall</label>
+            <button onclick="removeSection(${s.id})" class="text-red-400 hover:text-red-600"><i data-lucide="trash-2"></i></button>
           </div>
         </div>
         <div class="p-4">
@@ -213,6 +216,7 @@
           </div>
         </div>`;
       document.getElementById('sections-container').appendChild(div);
+      lucide.createIcons();
       updateUI(s.id);
     }
 
@@ -228,7 +232,7 @@
       lastProfile = val;
       updateUI(id);
     }
-    function removeSection(id) { sections = sections.filter(x => x.id !== id); document.getElementById(`section-${id}`).remove(); updateSummary(); }
+    function removeSection(id) { if(sections.length > 1) { sections = sections.filter(x => x.id !== id); document.getElementById(`section-${id}`).remove(); updateSummary(); } }
     function toggleDormer(id, chk) { activeDormerId = id; if(chk) document.getElementById('dormer-modal').classList.remove('hidden'); else { sections.find(x => x.id === id).hasDormer = false; updateUI(id); } }
     function closeDormerModal() { document.getElementById('dormer-modal').classList.add('hidden'); sections.find(x => x.id === activeDormerId).hasDormer = true; updateUI(activeDormerId); }
     function saveDormerData() {
@@ -237,6 +241,7 @@
     }
 
     addSection();
+    lucide.createIcons();
   </script>
 </body>
 </html>
