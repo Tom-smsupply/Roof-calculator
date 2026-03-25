@@ -1,142 +1,166 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=5.0">
-<title>Summit Metal Supply Roof Calculator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=5.0">
+  <title>Summit Metal Supply Roof Calculator</title>
 
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@latest/font/lucide.css"/>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e40af">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="logo.png">
 
-<style>
-body { font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; }
-.input-field { border:1px solid #cbd5e1; border-radius:0.5rem; padding:0.5rem; width:100%; }
-.section-label { background:white; border:3px solid #1e40af; font-size:2rem; font-weight:900; padding:10px 20px; border-radius:9999px; }
-</style>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@latest/font/lucide.css"/>
+
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; overscroll-behavior-y: contain; }
+    html, body { overscroll-behavior-y: contain !important; }
+    input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .input-field { border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.5rem 0.75rem; width: 100%; transition: all 0.2s; }
+    .input-field:focus { border-color: #3b82f6; outline: 2px solid #dbeafe; }
+    .section-label { background: white; border: 3px solid #1e40af; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); font-size: 2.25rem; font-weight: 900; letter-spacing: -2px; padding: 14px 32px; border-radius: 9999px; min-width: 180px; text-align: center; }
+  </style>
 </head>
 
-<body class="bg-slate-50 p-4">
+<body class="min-h-screen bg-slate-50 p-2 md:p-8">
 
-<div class="max-w-6xl mx-auto">
-<h1 class="text-2xl font-bold mb-4">Roof Calculator</h1>
+<div class="max-w-7xl mx-auto">
+  <h1 class="text-2xl md:text-3xl font-bold text-slate-900 mb-6">Roof Calculator</h1>
 
-<div id="sections-container"></div>
+  <div id="sections-container" class="space-y-6"></div>
 
-<button onclick="addSection()" class="bg-blue-600 text-white px-4 py-2 rounded mt-6">Add Section</button>
+  <div class="mt-8 mb-12 flex justify-center">
+    <button onclick="addSection()" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg">Add Section</button>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
 
 <script>
-let sections = [];
 
-// ================= EXISTING CALCULATE (UNCHANGED) =================
-function calculate(s){
-  const cov=parseFloat(s.coverage)||0,r=parseFloat(s.ridge)||0,e=parseFloat(s.eave)||0,h=parseFloat(s.height)||0;
-  if(cov<=0||(r<=0&&e<=0))return null;
-  const maxW=Math.max(r,e),totalP=Math.ceil(maxW/cov),data=[];
-  for(let i=0;i<totalP;i++){
-    data.push({len:Math.ceil(h)});
+let sections = [], lastProfile = 'tuff';
+
+// ================= ORIGINAL CALCULATE (UNCHANGED CORE USE OF HEIGHT) =================
+function calculate(s) {
+  const cov = parseFloat(s.coverage)||0, r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0, h = parseFloat(s.height)||0;
+  if (cov <= 0 || (r <= 0 && e <= 0)) return null;
+
+  const totalP = Math.ceil(Math.max(r,e) / cov);
+  const data = [];
+
+  for (let i = 0; i < totalP; i++) {
+    data.push({ len: Math.ceil(h) });
   }
-  return {panelData:data};
+
+  return { panelData: data };
 }
 
-// ================= NEW LOGIC =================
-function handleHeightInput(id,val){
-  const s=sections.find(x=>x.id===id);
+// ================= NEW FEATURE =================
+function handleHeightInput(id, val) {
+  const s = sections.find(x => x.id === id);
 
-  if(val!==""){
-    document.getElementById(`pitch-${id}`).value='';
-    document.getElementById(`slope-${id}`).value='';
+  if (val !== '') {
+    document.getElementById(`pitch-${id}`).value = '';
+    document.getElementById(`slope-${id}`).value = '';
   }
 
-  s.height=parseFloat(val)||0;
+  s.height = parseFloat(val) || 0;
   updateUI(id);
 }
 
-function handlePitchInput(id){
-  const s=sections.find(x=>x.id===id);
+function handlePitchInput(id) {
+  const s = sections.find(x => x.id === id);
 
-  const pitch=parseFloat(document.getElementById(`pitch-${id}`).value);
-  const slopeLen=parseFloat(document.getElementById(`slope-${id}`).value);
+  const pitch = parseFloat(document.getElementById(`pitch-${id}`).value);
+  const slopeLen = parseFloat(document.getElementById(`slope-${id}`).value);
 
-  if(pitch||slopeLen){
-    document.getElementById(`height-${id}`).value='';
+  if (pitch || slopeLen) {
+    document.getElementById(`height-${id}`).value = '';
   }
 
-  if(pitch>0 && slopeLen>0){
-    const angle=Math.atan(pitch/12);
-    const height=slopeLen*Math.sin(angle);
-    s.height=height;
+  if (pitch > 0 && slopeLen > 0) {
+    const angle = Math.atan(pitch / 12);
+    const height = slopeLen * Math.sin(angle);
+    s.height = height;
     updateUI(id);
   }
 }
 
 // ================= UI =================
-function updateUI(id){
-  const s=sections.find(x=>x.id===id);
-  const res=calculate(s);
-  if(!res)return;
-  document.getElementById(`output-${id}`).innerText="Panels: "+res.panelData.length;
+function updateUI(id) {
+  const s = sections.find(x => x.id === id);
+  const res = calculate(s);
+  if (!res) return;
+
+  document.getElementById(`list-${id}`).innerText = "Panels: " + res.panelData.length;
 }
 
-function updateVal(id,field,val){
-  const s=sections.find(x=>x.id===id);
-  s[field]=val;
+function updateVal(id, field, val) {
+  sections.find(x => x.id === id)[field] = val;
   updateUI(id);
 }
 
-function addSection(){
-  const id=Date.now();
-  const s={id,ridge:'',eave:'',height:'',coverage:36};
+function addSection() {
+  const id = Date.now();
+  const coverage = lastProfile === 'mechanical' ? 15.75 : 36;
+
+  const s = { id, ridge: '', eave: '', height: '', coverage };
   sections.push(s);
 
-  const div=document.createElement('div');
-  div.className="bg-white p-4 rounded shadow mb-4";
-  div.innerHTML=`
-    <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-3">
+  const div = document.createElement('div');
+  div.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8";
 
-      <div>
-        <label class="text-xs">Ridge</label>
-        <input type="number" class="input-field" oninput="updateVal(${id},'ridge',this.value)">
+  div.innerHTML = `
+    <div class="p-4">
+
+      <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4">
+
+        <div>
+          <label class="text-[10px] font-black uppercase text-slate-400">Ridge (In)</label>
+          <input type="number" class="input-field" oninput="updateVal(${id}, 'ridge', this.value)">
+        </div>
+
+        <div>
+          <label class="text-[10px] font-black uppercase text-slate-400">Eave (In)</label>
+          <input type="number" class="input-field" oninput="updateVal(${id}, 'eave', this.value)">
+        </div>
+
+        <!-- HEIGHT -->
+        <div>
+          <label class="text-[10px] font-black uppercase text-slate-400">Height (In)</label>
+          <input type="number" id="height-${id}" class="input-field"
+            oninput="handleHeightInput(${id}, this.value)">
+        </div>
+
+        <!-- PITCH -->
+        <div>
+          <label class="text-[10px] font-black uppercase text-slate-400">Pitch (X/12)</label>
+          <input type="number" id="pitch-${id}" class="input-field"
+            oninput="handlePitchInput(${id})">
+        </div>
+
+        <!-- VALLEY / HIP -->
+        <div>
+          <label class="text-[10px] font-black uppercase text-slate-400">Valley/Hip (In)</label>
+          <input type="number" id="slope-${id}" class="input-field"
+            oninput="handlePitchInput(${id})">
+        </div>
+
       </div>
 
-      <div>
-        <label class="text-xs">Eave</label>
-        <input type="number" class="input-field" oninput="updateVal(${id},'eave',this.value)">
-      </div>
-
-      <!-- HEIGHT INPUT -->
-      <div>
-        <label class="text-xs">Height</label>
-        <input type="number" id="height-${id}" class="input-field"
-          oninput="handleHeightInput(${id},this.value)">
-      </div>
-
-      <!-- NEW PITCH -->
-      <div>
-        <label class="text-xs">Pitch (X/12)</label>
-        <input type="number" id="pitch-${id}" class="input-field"
-          oninput="handlePitchInput(${id})">
-      </div>
-
-      <!-- NEW SLOPE -->
-      <div>
-        <label class="text-xs">Valley/Hip</label>
-        <input type="number" id="slope-${id}" class="input-field"
-          oninput="handlePitchInput(${id})">
-      </div>
+      <div id="list-${id}" class="border rounded-xl bg-white p-3"></div>
 
     </div>
-
-    <div id="output-${id}" class="font-bold text-blue-700"></div>
   `;
 
   document.getElementById('sections-container').appendChild(div);
 }
 
 addSection();
-</script>
 
+</script>
 </body>
 </html>
