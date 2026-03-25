@@ -16,7 +16,7 @@
     body { font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; overscroll-behavior-y: contain; }
     html, body { overscroll-behavior-y: contain !important; }
     input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-    .input-field { border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.5rem 0.75rem; width: 100%; transition: all 0.2s; }
+    .input-field { border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.5rem 0.75rem; width: 100%; transition: all 0.2s; font-size: 0.875rem; }
     .input-field:focus { border-color: #3b82f6; outline: 2px solid #dbeafe; }
     .section-label { background: white; border: 3px solid #1e40af; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); font-size: 2.25rem; font-weight: 900; letter-spacing: -2px; padding: 14px 32px; border-radius: 9999px; min-width: 180px; text-align: center; }
     #install-banner { display: none; }
@@ -78,63 +78,25 @@
     <div class="mt-8 mb-12 flex justify-center no-print"><button onclick="addSection()" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg">Add Section</button></div>
   </div>
 
-  <div class="mt-10 text-center no-print">
-    <button
-      onclick="installPWA()"
-      class="inline-flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-xl font-semibold shadow-md transition"
-    >
-      <i data-lucide="download" class="w-5 h-5"></i>
-      Download App (Install)
-    </button>
-  </div>
-
   <div id="help-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-overlay">
     <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
       <div class="p-6">
         <h2 class="text-2xl font-bold mb-4 text-blue-800">How to Use the Calculator</h2>
         <div class="space-y-4 text-slate-700">
-          <p>Welcome to the Summit Metal Supply Roof Calculator. This tool provides professional estimates for metal roofing panels and trims. For accuracy, please follow the measurement guidelines below.</p>
+          <p>Welcome to the Summit Metal Supply Roof Calculator. This tool provides professional estimates for metal roofing panels and trims.</p>
           <h3 class="font-bold text-lg mt-6">Section Setup</h3>
           <p>Each roof plane should be entered as a separate section (A, B, C, etc.).</p>
           <ul class="list-disc pl-5 space-y-1">
-            <li><strong>Section Names:</strong> Click on the section letter (e.g., "A") to edit the name for better clarity (e.g., "Front Porch").</li>
-            <li><strong>Profile:</strong> Choose your panel style. Tuff/Diamond uses 36" coverage; Mechanical uses 15.75".</li>
-            <li><strong>Pitch:</strong> Vertical rise over a 12" run.</li>
-            <li><strong>Angle Type:</strong>
-              <ul class="list-circle pl-5 mt-1">
-                <li>Right / Left Angle: One side square, one side angled.</li>
-                <li>Both / Centered: A standard centered gable.</li>
-              </ul>
-            </li>
+            <li><strong>Pitch:</strong> Vertical rise over a 12" run. Entering this helps calculate height from hip lengths.</li>
+            <li><strong>Hip/Val (In):</strong> The diagonal length of a hip or valley. Use this if you don't know the flat height.</li>
+            <li><strong>Height (In):</strong> The flat-down distance from ridge to eave. If left blank, it will be calculated using Pitch and Hip/Valley.</li>
           </ul>
-          <h3 class="font-bold text-lg mt-6">Primary Measurements (Inches)</h3>
-          <ul class="list-disc pl-5 space-y-1">
-            <li><strong>Ridge:</strong> Measurement across the very top.</li>
-            <li><strong>Eave:</strong> Measurement across the bottom gutter line.</li>
-            <li><strong>Height:</strong> The flat-down distance from ridge to eave (not the slope length).</li>
-            <li><strong>Fold / Overhang:</strong> Fold for Standing Seam; Overhang for Tuff/Diamond Rib.</li>
-          </ul>
-          <h3 class="font-bold text-lg mt-6">Wall Flashing & Specialized Trims</h3>
-          <p>Toggle "Wall" checkboxes if an edge meets a vertical wall.</p>
-          <ul class="list-disc pl-5 space-y-1">
-            <li><strong>Top wall:</strong> Swaps Ridge Cap for End-Wall Flashing.</li>
-            <li><strong>Side wall:</strong> Swaps Gable/Valley for Side-Wall Flashing.</li>
-          </ul>
-          <h3 class="font-bold text-lg mt-6">Dormer Entry</h3>
-          <p>Toggle "Dormer" and measure from the far-left edge of that specific section.</p>
-          <ul class="list-disc pl-5 space-y-1">
-            <li><strong>Left to Dormer:</strong> Distance from left edge to dormer start.</li>
-            <li><strong>Width:</strong> Full span of dormer base.</li>
-            <li><strong>Eave to Dormer:</strong> Run from eave up to dormer bottom.</li>
-            <li><strong>Ridge to Dormer:</strong> Run from ridge down to dormer peak.</li>
-          </ul>
-          <p class="mt-6">We are constantly improving our calculator. If you have specific ideas for improvements or new features, please let us know.</p>
-          <p><strong>Contact:</strong> info@smsupply.ca</p>
         </div>
         <button onclick="document.getElementById('help-modal').classList.add('hidden')" class="mt-8 w-full bg-blue-600 text-white py-3 rounded-xl font-bold">Got it!</button>
       </div>
     </div>
   </div>
+  
   <div id="dormer-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-overlay">
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
       <div class="p-4 border-b bg-slate-50 flex justify-between items-center"><h3 class="font-bold">Dormer Settings (Inches)</h3><button onclick="closeDormerModal()">×</button></div>
@@ -149,70 +111,76 @@
       <div class="p-4 bg-slate-50 text-right"><button onclick="closeDormerModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Save</button></div>
     </div>
   </div>
+
   <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
   <script>
-    let activeDormerId = null, projectName = '', sections = [], lastProfile = 'tuff';
+    let activeDormerId = null, projectName = '', sections = [], lastProfile = 'tuff', lastPitch = 4;
 
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      window.deferredPrompt = e;
-    });
+    function calculate(s) {
+      const cov = parseFloat(s.coverage)||0, r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0, fold = parseFloat(s.eaveFold)||0;
+      const pitch = parseFloat(s.pitch) || lastPitch;
+      let h = parseFloat(s.height);
 
-function calculate(s) {
-  const cov = parseFloat(s.coverage)||0, r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0, h = parseFloat(s.height)||0, fold = parseFloat(s.eaveFold)||0;
-  if (cov <= 0 || (r <= 0 && e <= 0)) return null;
-  const maxW = Math.max(r, e), totalP = Math.ceil(maxW / cov), data = [];
-  const hDiff = Math.abs(r - e), slope = hDiff > 0 ? h / hDiff : 0;
-
-  // For 'both' (centered gable): pre-compute the flat zone boundaries
-  const minRE = Math.min(r, e);
-  const flatStart = (maxW - minRE) / 2;
-  const flatEnd = flatStart + minRE;
-
-  for (let i = 0; i < totalP; i++) {
-    let startX, endX;
-    if (s.config === 'left') { startX = maxW - ((i + 1) * cov); endX = maxW - (i * cov); }
-    else if (s.config === 'both') { startX = (maxW / 2) - ((totalP / 2 - i) * cov); endX = startX + cov; }
-    else { startX = i * cov; endX = (i + 1) * cov; }
-
-    let base;
-    if (s.config === 'both') {
-      // Symmetric calculation: use endX for left side (mirrors how 'left' config uses endX),
-      // and startX for right side — this ensures odd panel counts stay perfectly symmetric
-      if (startX < flatStart) {
-        // Left angled region: distance of endX from flat zone start
-        const distIntoAngle = flatStart - Math.min(endX, flatStart);
-        base = h - (distIntoAngle * slope);
-      } else if (startX >= flatEnd) {
-        // Right angled region: distance of startX from flat zone end
-        const distIntoAngle = startX - flatEnd;
-        base = h - (distIntoAngle * slope);
+      // Trigonometry to find flat height (h) if not provided
+      if ((isNaN(h) || h <= 0) && s.hipLen > 0) {
+          const runDiff = Math.abs(r - e);
+          const slopeFactor = Math.sqrt(1 + Math.pow(pitch / 12, 2));
+          // Height = sqrt(Hip² - RunDiff²) / SlopeFactor
+          const calcH = Math.sqrt(Math.pow(s.hipLen, 2) - Math.pow(runDiff, 2)) / slopeFactor;
+          h = calcH > 0 ? calcH : 0;
+          
+          const hInput = document.getElementById(`height-input-${s.id}`);
+          if (hInput) hInput.placeholder = `Calc: ${h.toFixed(1)}"`;
       } else {
-        // Flat center zone
-        base = h;
+          const hInput = document.getElementById(`height-input-${s.id}`);
+          if (hInput) hInput.placeholder = "Manual";
       }
-      base = Math.max(0, base);
-    } else if (s.config === 'left') {
-      base = endX < (maxW - Math.min(r,e)) ? h - ((maxW - Math.min(r,e) - endX) * slope) : h;
-    } else {
-      base = startX < Math.min(r,e) ? h : h - ((startX - Math.min(r,e)) * slope);
-    }
 
-    if (s.hasDormer) {
-      const d = s.dormer, dR = d.left + d.width;
-      if (startX >= d.left && endX <= dR) {
-        data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: startX });
-        const pH = h - d.bottom - d.top, mid = d.left + d.width / 2;
-        const getDH = (x) => Math.max(0, pH * (1 - Math.abs(x - mid) / (d.width / 2)));
-        const minDormerHeight = Math.min(getDH(startX), getDH(endX));
-        data.push({ len: Math.ceil(d.top + (pH - minDormerHeight)), type: 'over', xPos: startX });
-        continue;
+      if (cov <= 0 || (r <= 0 && e <= 0) || h <= 0) return null;
+      
+      const maxW = Math.max(r, e), totalP = Math.ceil(maxW / cov), data = [];
+      const hDiff = Math.abs(r - e), slope = hDiff > 0 ? h / hDiff : 0;
+      const minRE = Math.min(r, e);
+      const flatStart = (maxW - minRE) / 2;
+      const flatEnd = flatStart + minRE;
+
+      for (let i = 0; i < totalP; i++) {
+        let startX, endX;
+        if (s.config === 'left') { startX = maxW - ((i + 1) * cov); endX = maxW - (i * cov); }
+        else if (s.config === 'both') { startX = (maxW / 2) - ((totalP / 2 - i) * cov); endX = startX + cov; }
+        else { startX = i * cov; endX = (i + 1) * cov; }
+
+        let base;
+        if (s.config === 'both') {
+          if (startX < flatStart) {
+            const distIntoAngle = flatStart - Math.min(endX, flatStart);
+            base = h - (distIntoAngle * slope);
+          } else if (startX >= flatEnd) {
+            const distIntoAngle = startX - flatEnd;
+            base = h - (distIntoAngle * slope);
+          } else { base = h; }
+          base = Math.max(0, base);
+        } else if (s.config === 'left') {
+          base = endX < (maxW - Math.min(r,e)) ? h - ((maxW - Math.min(r,e) - endX) * slope) : h;
+        } else {
+          base = startX < Math.min(r,e) ? h : h - ((startX - Math.min(r,e)) * slope);
+        }
+
+        if (s.hasDormer) {
+          const d = s.dormer, dR = d.left + d.width;
+          if (startX >= d.left && endX <= dR) {
+            data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: startX });
+            const pH = h - d.bottom - d.top, mid = d.left + d.width / 2;
+            const getDH = (x) => Math.max(0, pH * (1 - Math.abs(x - mid) / (d.width / 2)));
+            const minDormerHeight = Math.min(getDH(startX), getDH(endX));
+            data.push({ len: Math.ceil(d.top + (pH - minDormerHeight)), type: 'over', xPos: startX });
+            continue;
+          }
+        }
+        data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard', xPos: startX });
       }
+      return { panelData: data, maxW, coverage: cov, finalH: h };
     }
-    data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard', xPos: startX });
-  }
-  return { panelData: data, maxW, coverage: cov };
-}
 
     function updateSummary() {
       let grandP = 0, grandIn = 0, grandSq = 0, tRidge = 0, tEave = 0, tVal = 0, tHip = 0, tGable = 0, tEndWall = 0, tSideWall = 0, mechSq = 0;
@@ -222,13 +190,13 @@ function calculate(s) {
           grandP += res.panelData.length;
           const sIn = res.panelData.reduce((sum, p) => sum + p.len, 0); grandIn += sIn;
           const sSq = (sIn / 12) * (res.coverage / 12); grandSq += sSq;
-          const h = parseFloat(s.height)||0, r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0;
+          const h = res.finalH, r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0;
           tEave += e;
           if (s.topAgainstWall) tEndWall += r; else tRidge += r;
           if (Math.abs(r-e) > 0.1 && h > 0) {
-             const hyp = Math.sqrt(Math.pow(Math.abs(r-e), 2) + h*h);
-             if ((s.config === 'right' && s.rightAgainstWall) || (s.config === 'left' && s.leftAgainstWall)) tSideWall += hyp;
-             else { if (r > e) tVal += hyp; else tHip += hyp; }
+              const hyp = Math.sqrt(Math.pow(Math.abs(r-e), 2) + h*h);
+              if ((s.config === 'right' && s.rightAgainstWall) || (s.config === 'left' && s.leftAgainstWall)) tSideWall += hyp;
+              else { if (r > e) tVal += hyp; else tHip += hyp; }
           }
           if (h > 0) {
             if (s.config === 'both') {
@@ -262,10 +230,11 @@ function calculate(s) {
       document.getElementById('end-wall-tile').style.display = tEndWall > 0 ? '' : 'none';
       document.getElementById('side-wall-tile').style.display = tSideWall > 0 ? '' : 'none';
     }
+
     function updateUI(id) {
       const s = sections.find(x => x.id === id), res = calculate(s), svg = document.getElementById(`svg-${id}`), list = document.getElementById(`list-${id}`);
       if (!res) return;
-      const w = 800, h = 300, m = 50, scale = (w-2*m)/res.maxW, hScale = (h-2*m)/(parseFloat(s.height)||1), rW = (parseFloat(s.ridge)||0)*scale, eW = (parseFloat(s.eave)||0)*scale;
+      const w = 800, h = 300, m = 50, scale = (w-2*m)/res.maxW, hScale = (h-2*m)/(res.finalH||1), rW = (parseFloat(s.ridge)||0)*scale, eW = (parseFloat(s.eave)||0)*scale;
       let rX, eX;
       if (s.config === 'left') { rX = m + (w-2*m) - rW; eX = m + (w-2*m) - eW; }
       else if (s.config === 'right') { rX = m; eX = m; }
@@ -296,22 +265,23 @@ function calculate(s) {
         summaryMap.map(i => `<tr class="border-b"><td class="p-2 font-bold">${i.count}</td><td class="p-2 text-right font-bold">${i.len}"${i.type!=='standard'?' ('+i.type+')':''}</td></tr>`).join('') + `</tbody></table>`;
       updateSummary();
     }
+
     function addSection() {
       const nextL = String.fromCharCode(65 + sections.length);
       const coverage = lastProfile === 'mechanical' ? 15.75 : 36;
-      const s = { id: Date.now(), name: nextL, ridge: '', eave: '', height: '', profile: lastProfile, coverage: coverage, eaveFold: 0, config: 'right', hasDormer: false, dormer: { left:0, width:0, bottom:0, top:0 }, topAgainstWall:false, leftAgainstWall:false, rightAgainstWall:false };
+      const s = { id: Date.now(), name: nextL, ridge: '', eave: '', height: '', pitch: lastPitch, hipLen: '', profile: lastProfile, coverage: coverage, eaveFold: 0, config: 'right', hasDormer: false, dormer: { left:0, width:0, bottom:0, top:0 }, topAgainstWall:false, leftAgainstWall:false, rightAgainstWall:false };
       sections.push(s); renderSection(s);
     }
-    function validateAndSave() { if (!projectName.trim()) { alert("Please enter a Project Name."); return; } saveProjectAsHTML(); }
-    function saveProjectAsHTML() { const data = `<script id="__saved_data__"> window.__SAVED_PROJECT__ = ${JSON.stringify({ projectName, sections })}; <\/script>`; const blob = new Blob([document.documentElement.outerHTML.replace('</head>', data + '</head>')], { type: 'text/html' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${projectName.replace(/[^a-z0-9]/gi, '_')}.html`; a.click(); }
-    function sendToOffice() {
-      if (!projectName.trim()) { alert("Please enter a Project Name."); return; }
-      saveProjectAsHTML();
-      const body = encodeURIComponent(`Hello Summit Metal Supply,\n\nI have created a roof project using the Summit Roof Calculator for "${projectName}".\n\nPlease find attached:\n1. The project file (automatically saved .html) – this contains all the inputs and can be reopened in the calculator.\n2. A PDF printout of the calculator results (generated via Print/PDF button) – this shows the summary and visuals.\n\nTotal Square Feet: ${document.getElementById('total-sq-ft').innerText}\nTotal Panels: ${document.getElementById('total-panels').innerText}\n\nPlease let me know the quote as soon as possible.\n\nThank you!`);
-      window.location.href = `mailto:info@smsupply.ca?subject=Roof Calculator: ${projectName}&body=${body}`;
-    }
+
     function removeSection(id) { if (sections.length > 1) { sections = sections.filter(x => x.id !== id); document.getElementById(`section-${id}`).remove(); updateSummary(); } }
-    function updateVal(id, f, val) { sections.find(x => x.id === id)[f] = val; updateUI(id); }
+    
+    function updateVal(id, f, val) { 
+        const s = sections.find(x => x.id === id);
+        s[f] = val; 
+        if (f === 'pitch') lastPitch = val; // Store globally for next sections
+        updateUI(id); 
+    }
+
     function updateProfile(id, val) {
         const s = sections.find(x => x.id === id);
         s.profile = val;
@@ -320,11 +290,7 @@ function calculate(s) {
         document.getElementById(`cov-display-${id}`).innerText = s.coverage + '" Coverage';
         updateUI(id);
     }
-    function toggleDormer(id, chk) { const s = sections.find(x => x.id === id); s.hasDormer = chk; if (chk) openDormerModal(id); else updateUI(id); }
-    function openDormerModal(id) { activeDormerId = id; document.getElementById('dormer-modal').classList.remove('hidden'); }
-    function closeDormerModal() { document.getElementById('dormer-modal').classList.add('hidden'); updateUI(activeDormerId); }
-    function saveDormerData() { const s = sections.find(x => x.id === activeDormerId); s.dormer = { left: parseFloat(document.getElementById('m-dormer-left').value)||0, width: parseFloat(document.getElementById('m-dormer-width').value)||0, bottom: parseFloat(document.getElementById('m-dormer-bottom').value)||0, top: parseFloat(document.getElementById('m-dormer-top').value)||0 }; }
-    function toggleWall(id, f, chk) { sections.find(x => x.id === id)[f] = chk; updateSummary(); }
+
     function renderSection(s) {
       const div = document.createElement('div'); div.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8"; div.id = `section-${s.id}`;
       div.innerHTML = `
@@ -339,10 +305,12 @@ function calculate(s) {
           </div>
         </div>
         <div class="p-4">
-          <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4 no-print">
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-4 no-print">
             <div><label class="text-[10px] font-black uppercase text-slate-400">Ridge (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'ridge', parseFloat(this.value))"></div>
             <div><label class="text-[10px] font-black uppercase text-slate-400">Eave (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'eave', parseFloat(this.value))"></div>
-            <div><label class="text-[10px] font-black uppercase text-slate-400">Height (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'height', parseFloat(this.value))"></div>
+            <div><label class="text-[10px] font-black uppercase text-slate-400">Pitch (/12)</label><input type="number" class="input-field" value="${s.pitch}" oninput="updateVal(${s.id}, 'pitch', parseFloat(this.value))"></div>
+            <div><label class="text-[10px] font-black uppercase text-slate-400">Hip/Val (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'hipLen', parseFloat(this.value))"></div>
+            <div><label class="text-[10px] font-black uppercase text-slate-400">Height (In)</label><input type="number" id="height-input-${s.id}" class="input-field" placeholder="Manual" oninput="updateVal(${s.id}, 'height', parseFloat(this.value))"></div>
             <div><label class="text-[10px] font-black uppercase text-slate-400">Profile</label><select class="input-field" onchange="updateProfile(${s.id}, this.value)"><option value="tuff" ${s.profile==='tuff'?'selected':''}>Tuff (36")</option><option value="mechanical" ${s.profile==='mechanical'?'selected':''}>Mech (15.75")</option><option value="diamond" ${s.profile==='diamond'?'selected':''}>Diamond (36")</option></select><p id="cov-display-${s.id}" class="text-[9px] mt-1 text-slate-500 font-bold">${s.coverage}" Coverage</p></div>
             <div><label class="text-[10px] font-black uppercase text-slate-400">Fold (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'eaveFold', parseFloat(this.value))"></div>
             <div><label class="text-[10px] font-black uppercase text-slate-400">Angle</label><select class="input-field" onchange="updateVal(${s.id}, 'config', this.value)"><option value="right">Right</option><option value="left">Left</option><option value="both">Both</option></select></div>
@@ -355,27 +323,25 @@ function calculate(s) {
       document.getElementById('sections-container').appendChild(div); lucide.createIcons(); updateUI(s.id);
     }
 
-    function installPWA() {
-      if (window.deferredPrompt) {
-        window.deferredPrompt.prompt();
-        window.deferredPrompt.userChoice.then((choiceResult) => {
-          if (choiceResult.outcome === 'accepted') {
-            console.log('PWA install accepted');
-          }
-          window.deferredPrompt = null;
-        });
-      } else {
-        alert("Install prompt not available.\n\nOn mobile: use the browser's menu → Add to Home Screen\nOn desktop: look for install icon in address bar");
-      }
+    // --- Helper Functions kept from original ---
+    function validateAndSave() { if (!projectName.trim()) { alert("Please enter a Project Name."); return; } saveProjectAsHTML(); }
+    function saveProjectAsHTML() { const data = `<script id="__saved_data__"> window.__SAVED_PROJECT__ = ${JSON.stringify({ projectName, sections })}; <\/script>`; const blob = new Blob([document.documentElement.outerHTML.replace('</head>', data + '</head>')], { type: 'text/html' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${projectName.replace(/[^a-z0-9]/gi, '_')}.html`; a.click(); }
+    function sendToOffice() {
+      if (!projectName.trim()) { alert("Please enter a Project Name."); return; }
+      saveProjectAsHTML();
+      const body = encodeURIComponent(`Hello Summit Metal Supply,\n\nI have created a roof project using the Summit Roof Calculator for "${projectName}".\n\nTotal Square Feet: ${document.getElementById('total-sq-ft').innerText}\nTotal Panels: ${document.getElementById('total-panels').innerText}\n\nThank you!`);
+      window.location.href = `mailto:info@smsupply.ca?subject=Roof Calculator: ${projectName}&body=${body}`;
     }
+    function toggleDormer(id, chk) { const s = sections.find(x => x.id === id); s.hasDormer = chk; if (chk) openDormerModal(id); else updateUI(id); }
+    function openDormerModal(id) { activeDormerId = id; document.getElementById('dormer-modal').classList.remove('hidden'); }
+    function closeDormerModal() { document.getElementById('dormer-modal').classList.add('hidden'); updateUI(activeDormerId); }
+    function saveDormerData() { const s = sections.find(x => x.id === activeDormerId); s.dormer = { left: parseFloat(document.getElementById('m-dormer-left').value)||0, width: parseFloat(document.getElementById('m-dormer-width').value)||0, bottom: parseFloat(document.getElementById('m-dormer-bottom').value)||0, top: parseFloat(document.getElementById('m-dormer-top').value)||0 }; }
+    function toggleWall(id, f, chk) { sections.find(x => x.id === id)[f] = chk; updateSummary(); }
 
     if (window.__SAVED_PROJECT__) {
       projectName = window.__SAVED_PROJECT__.projectName;
       document.getElementById('project-name').value = projectName;
       sections = window.__SAVED_PROJECT__.sections;
-      if (sections.length > 0) {
-        lastProfile = sections[0].profile || 'tuff';
-      }
       sections.forEach(renderSection);
     } else { addSection(); }
     lucide.createIcons();
