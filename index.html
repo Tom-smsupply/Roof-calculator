@@ -7,78 +7,95 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@latest/font/lucide.css"/>
   <style>
-    body { font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; }
+    body { font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; overscroll-behavior-y: contain; }
     input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-    .input-field { border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.4rem 0.6rem; width: 100%; transition: all 0.2s; font-size: 0.875rem; }
+    .input-field { border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.5rem 0.75rem; width: 100%; transition: all 0.2s; }
     .input-field:focus { border-color: #3b82f6; outline: 2px solid #dbeafe; }
-    .input-field:disabled { background-color: #f1f5f9; cursor: not-allowed; color: #94a3b8; }
-    .section-label { background: white; border: 3px solid #1e40af; font-size: 1.5rem; font-weight: 900; padding: 8px 20px; border-radius: 9999px; text-align: center; }
-    .mode-btn { padding: 2px 8px; font-size: 10px; font-weight: bold; border-radius: 4px; border: 1px solid #cbd5e1; cursor: pointer; }
-    .mode-active { background: #1e40af; color: white; border-color: #1e40af; }
-    @media print { .no-print { display: none !important; } }
+    .section-label { background: white; border: 3px solid #1e40af; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); font-size: 2.25rem; font-weight: 900; letter-spacing: -2px; padding: 14px 32px; border-radius: 9999px; min-width: 180px; text-align: center; }
+    .calc-highlight { background-color: #eff6ff !important; color: #1e40af !important; font-weight: bold; }
+    @media print { .no-print { display: none !important; } .print-only { display: block !important; } }
   </style>
 </head>
 <body class="min-h-screen bg-slate-50 p-2 md:p-8">
-
   <div class="max-w-7xl mx-auto">
-    <div class="flex flex-col sm:flex-row justify-between items-start mb-6 gap-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-6">
       <div class="flex-1">
-        <div class="text-blue-700 text-3xl font-extrabold tracking-tight">SUMMIT METAL SUPPLY</div>
-        <h1 class="text-xl font-bold text-slate-900">Roof Calculator</h1>
+        <div class="flex flex-col md:flex-row md:items-baseline gap-2 md:gap-4 mb-1">
+            <div class="text-blue-700 text-3xl md:text-4xl font-extrabold tracking-[-2px]">SUMMIT METAL SUPPLY</div>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-bold text-slate-900">Roof Calculator</h1>
         <div class="mt-3 flex items-center gap-3">
-          <span class="font-semibold text-slate-600">Project:</span>
-          <input id="project-name" type="text" class="input-field max-w-md no-print" placeholder="Enter Project Name">
+          <span class="font-semibold text-slate-600">Project Name:</span>
+          <input id="project-name" type="text" class="input-field max-w-md no-print" oninput="projectName = this.value">
         </div>
       </div>
-      <div class="flex gap-2 no-print">
-        <button onclick="addSection()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">Add Section</button>
-        <button onclick="window.print()" class="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold">Print PDF</button>
+      <div class="flex items-center gap-2 no-print flex-wrap">
+        <button onclick="addSection()" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold">Add Section</button>
+        <button onclick="window.print()" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-semibold">Print/PDF</button>
       </div>
     </div>
 
-    <div id="summary-container" class="mb-8 bg-blue-900 text-white rounded-xl p-6 shadow-lg">
+    <div id="summary-container" class="mb-8 bg-blue-900 text-white rounded-xl p-4 md:p-6 shadow-lg">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-blue-800/40 p-4 rounded-lg"><p class="text-blue-200 text-xs uppercase">Total Panels</p><p id="total-panels" class="text-3xl font-bold">0</p></div>
-        <div class="bg-blue-800/40 p-4 rounded-lg"><p class="text-blue-200 text-xs uppercase">Total Linear Feet</p><p class="text-3xl font-bold"><span id="total-linear-ft">0.0</span> ft</p></div>
-        <div class="bg-blue-800/40 p-4 rounded-lg"><p class="text-blue-200 text-xs uppercase">Total Sq Ft</p><p class="text-3xl font-bold"><span id="total-sq-ft">0</span></p></div>
+        <div class="bg-blue-800/40 p-4 rounded-lg"><p class="text-blue-200 text-xs uppercase font-black">Total Panels</p><p id="total-panels" class="text-3xl font-bold">0</p></div>
+        <div class="bg-blue-800/40 p-4 rounded-lg"><p class="text-blue-200 text-xs uppercase font-black">Total Linear Feet</p><p class="text-3xl font-bold"><span id="total-linear-ft">0.0</span> ft</p></div>
+        <div class="bg-blue-800/40 p-4 rounded-lg"><p class="text-blue-200 text-xs uppercase font-black">Total Square Feet</p><p class="text-3xl font-bold"><span id="total-sq-ft">0</span></p></div>
       </div>
     </div>
 
     <div id="sections-container" class="space-y-6"></div>
   </div>
 
+  <div id="dormer-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+      <div class="p-4 border-b bg-slate-50 flex justify-between items-center"><h3 class="font-bold">Dormer Settings (Inches)</h3><button onclick="closeDormerModal()">×</button></div>
+      <div class="p-6 space-y-4">
+        <div><label class="text-[10px] font-bold text-slate-500 uppercase">Left to Dormer</label><input type="number" id="m-dormer-left" class="input-field mt-1" oninput="saveDormerData()"></div>
+        <div><label class="text-[10px] font-bold text-slate-500 uppercase">Width</label><input type="number" id="m-dormer-width" class="input-field mt-1" oninput="saveDormerData()"></div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="text-[10px] font-bold text-slate-500 uppercase">Eave to Dormer</label><input type="number" id="m-dormer-bottom" class="input-field mt-1" oninput="saveDormerData()"></div>
+          <div><label class="text-[10px] font-bold text-slate-500 uppercase">Ridge to Dormer</label><input type="number" id="m-dormer-top" class="input-field mt-1" oninput="saveDormerData()"></div>
+        </div>
+      </div>
+      <div class="p-4 bg-slate-50 text-right"><button onclick="closeDormerModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Save</button></div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
   <script>
-    let sections = [], lastProfile = 'tuff', lastPitch = 4;
+    let activeDormerId = null, projectName = '', sections = [], lastProfile = 'tuff', lastPitch = 4;
 
     function calculate(s) {
       const cov = parseFloat(s.coverage)||0, r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0, fold = parseFloat(s.eaveFold)||0;
-      let h = 0;
+      let h = parseFloat(s.height);
 
-      if (s.heightMode === 'calc') {
-        const pitch = parseFloat(s.pitch) || 0;
-        const hip = parseFloat(s.hipLen) || 0;
-        const runDiff = Math.abs(r - e);
-        
-        if (hip > runDiff && pitch >= 0) {
-          const slopeFactor = Math.sqrt(1 + Math.pow(pitch / 12, 2));
-          // Correct Trig: Flat Height = sqrt(Hip² - RunDiff²) / SlopeFactor
-          h = Math.sqrt(Math.pow(hip, 2) - Math.pow(runDiff, 2)) / slopeFactor;
-          
-          // Update the UI display for the calculated height
-          const display = document.getElementById(`calc-display-${s.id}`);
-          if (display) display.value = h.toFixed(2) + '"';
-        }
+      // Trig Calculation Logic
+      if (isNaN(h) || h <= 0) {
+          if (s.hipLen > 0) {
+              const runDiff = Math.abs(r - e);
+              const pitch = parseFloat(s.pitch) || 0;
+              const slopeFactor = Math.sqrt(1 + Math.pow(pitch / 12, 2));
+              h = Math.sqrt(Math.pow(s.hipLen, 2) - Math.pow(runDiff, 2)) / slopeFactor;
+              
+              const hInput = document.getElementById(`height-input-${s.id}`);
+              if (hInput) {
+                  hInput.placeholder = h.toFixed(2) + '"';
+                  hInput.classList.add('calc-highlight');
+              }
+          }
       } else {
-        h = parseFloat(s.height) || 0;
+          const hInput = document.getElementById(`height-input-${s.id}`);
+          if (hInput) {
+              hInput.placeholder = "Manual";
+              hInput.classList.remove('calc-highlight');
+          }
       }
 
-      if (cov <= 0 || (r <= 0 && e <= 0) || h <= 0) return null;
-      
+      if (cov <= 0 || (r <= 0 && e <= 0) || h <= 0 || isNaN(h)) return null;
+
       const maxW = Math.max(r, e), totalP = Math.ceil(maxW / cov), data = [];
       const hDiff = Math.abs(r - e), slope = hDiff > 0 ? h / hDiff : 0;
-      const minRE = Math.min(r, e);
-      const flatStart = (maxW - minRE) / 2;
+      const minRE = Math.min(r, e), flatStart = (maxW - minRE) / 2, flatEnd = flatStart + minRE;
 
       for (let i = 0; i < totalP; i++) {
         let startX, endX;
@@ -88,7 +105,6 @@
 
         let base;
         if (s.config === 'both') {
-          const flatEnd = flatStart + minRE;
           if (startX < flatStart) {
             const distIntoAngle = flatStart - Math.min(endX, flatStart);
             base = h - (distIntoAngle * slope);
@@ -101,7 +117,17 @@
         } else {
           base = startX < minRE ? h : h - ((startX - minRE) * slope);
         }
-        data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard', xPos: startX });
+
+        if (s.hasDormer) {
+          const d = s.dormer, dR = d.left + d.width;
+          if (startX >= d.left && endX <= dR) {
+            data.push({ len: Math.ceil(d.bottom + fold), type: 'under' });
+            const pH = h - d.bottom - d.top;
+            data.push({ len: Math.ceil(d.top + (pH * 0.5)), type: 'over' }); // simplified dormer height logic
+            continue;
+          }
+        }
+        data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard' });
       }
       return { panelData: data, maxW, coverage: cov, finalH: h };
     }
@@ -125,92 +151,60 @@
     function updateUI(id) {
       const s = sections.find(x => x.id === id), res = calculate(s);
       const svg = document.getElementById(`svg-${id}`), list = document.getElementById(`list-${id}`);
-      if (!res) { svg.innerHTML = ''; list.innerHTML = ''; return; }
+      if (!res) return;
 
-      const w = 800, h = 300, m = 40, scale = (w-2*m)/res.maxW, hScale = (h-2*m)/(res.finalH||1);
+      const w = 800, h = 300, m = 40, scale = (w-2*m)/res.maxW;
       const rW = (parseFloat(s.ridge)||0)*scale, eW = (parseFloat(s.eave)||0)*scale;
       let rX = m, eX = m;
       if (s.config === 'left') { rX = w-m-rW; eX = w-m-eW; }
       else if (s.config === 'both') { rX = m+(w-2*m-rW)/2; eX = m+(w-2*m-eW)/2; }
 
-      let pLines = '', pLabels = '', pStep = res.coverage * scale;
-      res.panelData.forEach((p) => {
-        let x = m + (p.xPos * scale);
-        if (s.config === 'both') x = m + (w-2*m-res.maxW*scale)/2 + (p.xPos * scale);
-        pLines += `<line x1="${x}" y1="${m}" x2="${x}" y2="${h-m}" stroke="#cbd5e1" stroke-dasharray="4" />`;
-        pLabels += `<text x="${x + pStep/2}" y="${h/2}" font-size="12" font-weight="bold" fill="#1e40af" text-anchor="middle">${p.len}</text>`;
-      });
-
-      svg.innerHTML = `<polygon points="${eX},${h-m} ${eX+eW},${h-m} ${rX+rW},${m} ${rX},${m}" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>${pLines}${pLabels}`;
+      svg.innerHTML = `<polygon points="${eX},${h-m} ${eX+eW},${h-m} ${rX+rW},${m} ${rX},${m}" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>`;
       
       let counts = {};
       res.panelData.forEach(p => counts[p.len] = (counts[p.len] || 0) + 1);
-      list.innerHTML = `<table class="w-full text-sm">` + Object.entries(counts).map(([len, qty]) => `<tr class="border-b"><td class="p-1 font-bold">${qty}x</td><td class="p-1 text-right">${len}"</td></tr>`).join('') + `</table>`;
+      list.innerHTML = `<table class="w-full text-xs">` + Object.entries(counts).map(([len, qty]) => `<tr class="border-b"><td class="p-2 font-bold">${qty}</td><td class="p-2 text-right">${len}"</td></tr>`).join('') + `</table>`;
       updateSummary();
     }
 
-    function setHeightMode(id, mode) {
-      const s = sections.find(x => x.id === id);
-      s.heightMode = mode;
-      document.getElementById(`btn-manual-${id}`).className = `mode-btn ${mode==='manual'?'mode-active':''}`;
-      document.getElementById(`btn-calc-${id}`).className = `mode-btn ${mode==='calc'?'mode-active':''}`;
-      document.getElementById(`height-input-${id}`).disabled = (mode === 'calc');
-      document.getElementById(`pitch-input-${id}`).disabled = (mode === 'manual');
-      document.getElementById(`hip-input-${id}`).disabled = (mode === 'manual');
-      updateUI(id);
-    }
-
     function addSection() {
-      const s = { 
-        id: Date.now(), name: String.fromCharCode(65 + sections.length), 
-        ridge: '', eave: '', height: '', pitch: lastPitch, hipLen: '', 
-        heightMode: 'manual', profile: lastProfile, coverage: (lastProfile === 'mechanical' ? 15.75 : 36), 
-        eaveFold: 0, config: 'right' 
-      };
+      const s = { id: Date.now(), name: String.fromCharCode(65 + sections.length), ridge: '', eave: '', height: '', pitch: lastPitch, hipLen: '', profile: lastProfile, coverage: (lastProfile==='mechanical'?15.75:36), eaveFold: 0, config: 'right', hasDormer: false, dormer: {left:0, width:0, bottom:0, top:0} };
       sections.push(s);
       const div = document.createElement('div');
       div.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8";
       div.id = `section-${s.id}`;
       div.innerHTML = `
-        <div class="p-4 bg-slate-50 border-b flex justify-between items-center">
-          <input type="text" value="${s.name}" class="font-bold text-lg bg-transparent border-b border-transparent focus:border-blue-500 outline-none" oninput="updateVal(${s.id}, 'name', this.value)">
-          <button onclick="removeSection(${s.id})" class="text-red-500 font-bold text-sm">Remove</button>
+        <div class="p-4 bg-slate-50 border-b flex flex-wrap justify-between items-center gap-4">
+          <input type="text" value="${s.name}" class="section-label" oninput="updateVal(${s.id}, 'name', this.value)">
+          <div class="flex gap-2 no-print">
+            <button onclick="toggleDormer(${s.id})" class="bg-white border px-3 py-1 rounded text-xs font-bold">Dormer</button>
+            <button onclick="removeSection(${s.id})" class="text-red-500"><i data-lucide="trash-2"></i></button>
+          </div>
         </div>
         <div class="p-4">
-          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
-            <div><label class="text-[10px] font-bold uppercase text-slate-400">Ridge (In)</label>
-                 <input type="number" class="input-field" oninput="updateVal(${s.id}, 'ridge', parseFloat(this.value))"></div>
-            <div><label class="text-[10px] font-bold uppercase text-slate-400">Eave (In)</label>
-                 <input type="number" class="input-field" oninput="updateVal(${s.id}, 'eave', parseFloat(this.value))"></div>
-            
-            <div class="col-span-1 border-l pl-3">
-              <div class="flex justify-between items-center mb-1">
-                <label class="text-[10px] font-bold uppercase text-slate-400">Height (In)</label>
-                <div class="flex gap-1">
-                  <button id="btn-manual-${s.id}" class="mode-btn mode-active" onclick="setHeightMode(${s.id}, 'manual')">Man</button>
-                  <button id="btn-calc-${s.id}" class="mode-btn" onclick="setHeightMode(${s.id}, 'calc')">Trig</button>
-                </div>
-              </div>
-              <input type="number" id="height-input-${s.id}" class="input-field" placeholder="Manual" oninput="updateVal(${s.id}, 'height', parseFloat(this.value))">
-              <input type="text" id="calc-display-${s.id}" class="input-field mt-1 bg-blue-50 font-bold text-blue-700" readonly placeholder="Result">
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-4">
+            <div><label class="text-[10px] font-bold uppercase text-slate-400">Ridge (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'ridge', parseFloat(this.value))"></div>
+            <div><label class="text-[10px] font-bold uppercase text-slate-400">Eave (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'eave', parseFloat(this.value))"></div>
+            <div><label class="text-[10px] font-bold uppercase text-slate-400">Pitch (/12)</label><input type="number" class="input-field" value="${s.pitch}" oninput="updateVal(${s.id}, 'pitch', parseFloat(this.value))"></div>
+            <div><label class="text-[10px] font-bold uppercase text-slate-400">Hip/Val (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'hipLen', parseFloat(this.value))"></div>
+            <div><label class="text-[10px] font-bold uppercase text-slate-400">Height (In)</label><input type="number" id="height-input-${s.id}" class="input-field" oninput="updateVal(${s.id}, 'height', parseFloat(this.value))"></div>
+            <div><label class="text-[10px] font-bold uppercase text-slate-400">Profile</label>
+              <select class="input-field" onchange="updateProfile(${s.id}, this.value)">
+                <option value="tuff">Tuff (36")</option><option value="mechanical">Mech (15.75")</option><option value="diamond">Diamond (36")</option>
+              </select>
             </div>
-
-            <div><label class="text-[10px] font-bold uppercase text-slate-400">Pitch (/12)</label>
-                 <input type="number" id="pitch-input-${s.id}" class="input-field" value="${s.pitch}" disabled oninput="updateVal(${s.id}, 'pitch', parseFloat(this.value))"></div>
-            <div><label class="text-[10px] font-bold uppercase text-slate-400">Hip/Valley (In)</label>
-                 <input type="number" id="hip-input-${s.id}" class="input-field" disabled oninput="updateVal(${s.id}, 'hipLen', parseFloat(this.value))"></div>
-            
+            <div><label class="text-[10px] font-bold uppercase text-slate-400">Fold (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'eaveFold', parseFloat(this.value))"></div>
             <div><label class="text-[10px] font-bold uppercase text-slate-400">Angle</label>
-                 <select class="input-field" onchange="updateVal(${s.id}, 'config', this.value)"><option value="right">Right</option><option value="left">Left</option><option value="both">Both</option></select></div>
-            <div><label class="text-[10px] font-bold uppercase text-slate-400">Fold (In)</label>
-                 <input type="number" class="input-field" oninput="updateVal(${s.id}, 'eaveFold', parseFloat(this.value))"></div>
+              <select class="input-field" onchange="updateVal(${s.id}, 'config', this.value)"><option value="right">Right</option><option value="left">Left</option><option value="both">Both</option></select>
+            </div>
           </div>
           <div class="grid lg:grid-cols-4 gap-4">
-            <div class="lg:col-span-3 bg-slate-50 rounded-xl border min-h-[250px] flex items-center justify-center"><svg id="svg-${s.id}" viewBox="0 0 800 300" class="w-full"></svg></div>
-            <div id="list-${s.id}" class="border rounded-xl p-2 bg-white"></div>
+            <div class="lg:col-span-3 bg-slate-50 border rounded-xl flex items-center justify-center p-4"><svg id="svg-${s.id}" viewBox="0 0 800 300" class="w-full"></svg></div>
+            <div id="list-${s.id}" class="border rounded-xl bg-white overflow-hidden p-2"></div>
           </div>
         </div>`;
       document.getElementById('sections-container').appendChild(div);
+      lucide.createIcons();
       updateUI(s.id);
     }
 
@@ -220,7 +214,18 @@
       if (f === 'pitch') lastPitch = val;
       updateUI(id); 
     }
+    function updateProfile(id, val) {
+      const s = sections.find(x => x.id === id);
+      s.profile = val; s.coverage = (val === 'mechanical' ? 15.75 : 36);
+      updateUI(id);
+    }
     function removeSection(id) { sections = sections.filter(x => x.id !== id); document.getElementById(`section-${id}`).remove(); updateSummary(); }
+    function toggleDormer(id) { activeDormerId = id; document.getElementById('dormer-modal').classList.remove('hidden'); }
+    function closeDormerModal() { document.getElementById('dormer-modal').classList.add('hidden'); sections.find(x => x.id === activeDormerId).hasDormer = true; updateUI(activeDormerId); }
+    function saveDormerData() {
+      const s = sections.find(x => x.id === activeDormerId);
+      s.dormer = { left: parseFloat(document.getElementById('m-dormer-left').value)||0, width: parseFloat(document.getElementById('m-dormer-width').value)||0, bottom: parseFloat(document.getElementById('m-dormer-bottom').value)||0, top: parseFloat(document.getElementById('m-dormer-top').value)||0 };
+    }
 
     addSection();
   </script>
