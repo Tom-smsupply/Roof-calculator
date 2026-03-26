@@ -18,6 +18,7 @@
     input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     .input-field { border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.5rem 0.75rem; width: 100%; transition: all 0.2s; }
     .input-field:focus { border-color: #3b82f6; outline: 2px solid #dbeafe; }
+    .input-field:disabled { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
     .section-label { background: white; border: 3px solid #1e40af; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); font-size: 2.25rem; font-weight: 900; letter-spacing: -2px; padding: 14px 32px; border-radius: 9999px; min-width: 180px; text-align: center; }
     #install-banner { display: none; }
     @media (max-width: 768px) { .section-label { font-size: 1.5rem; padding: 8px 20px; min-width: 100px; } svg, table { max-width: 100% !important; height: auto; } }
@@ -111,8 +112,15 @@
           <ul class="list-disc pl-5 space-y-1">
             <li><strong>Ridge:</strong> Measurement across the very top.</li>
             <li><strong>Eave:</strong> Measurement across the bottom gutter line.</li>
-            <li><strong>Height:</strong> The flat-down distance from ridge to eave (not the slope length).</li>
+            <li><strong>Length:</strong> You can input this directly, OR calculate it from hip/valley/gable measurements using the slope.</li>
+            <li><strong>Slope:</strong> Vertical rise over 12" run (e.g., 6/12 for a 6:12 pitch).</li>
             <li><strong>Fold / Overhang:</strong> Fold for Standing Seam; Overhang for Tuff/Diamond Rib.</li>
+          </ul>
+          <h3 class="font-bold text-lg mt-6">Length Input Options</h3>
+          <p>Choose one of two methods:</p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li><strong>Direct Length Input:</strong> If you know the flat-down distance from ridge to eave, enter it directly in the Length field.</li>
+            <li><strong>Calculate from Hip/Valley/Gable:</strong> If you have a 2D plan and know the hip/valley or gable length, enter that measurement and the slope. The calculator will compute the roof plane length automatically.</li>
           </ul>
           <h3 class="font-bold text-lg mt-6">Wall Flashing & Specialized Trims</h3>
           <p>Toggle "Wall" checkboxes if an edge meets a vertical wall.</p>
@@ -296,11 +304,89 @@ function calculate(s) {
         summaryMap.map(i => `<tr class="border-b"><td class="p-2 font-bold">${i.count}</td><td class="p-2 text-right font-bold">${i.len}"${i.type!=='standard'?' ('+i.type+')':''}</td></tr>`).join('') + `</tbody></table>`;
       updateSummary();
     }
+
+    function switchHeightMode(id, mode) {
+      const s = sections.find(x => x.id === id);
+      s.heightMode = mode;
+      
+      const lengthInput = document.getElementById(`length-input-${id}`);
+      const hipValleyInput = document.getElementById(`hipvalley-input-${id}`);
+      const lengthField = lengthInput.querySelector('input');
+      const hipValleyField = hipValleyInput.querySelector('input');
+      
+      if (mode === 'direct') {
+        lengthInput.style.opacity = '1';
+        lengthField.disabled = false;
+        hipValleyInput.style.display = 'none';
+        hipValleyField.disabled = true;
+      } else {
+        lengthInput.style.opacity = '0.5';
+        lengthField.disabled = true;
+        hipValleyInput.style.display = '';
+        hipValleyField.disabled = false;
+      }
+      
+      updateUI(id);
+    }
+
+    function updateHeightMode(id, source) {
+      const s = sections.find(x => x.id === id);
+      if (source === 'direct') {
+        s.heightMode = 'direct';
+        document.querySelector(`input[name="height-mode-${id}"][value="direct"]`).checked = true;
+        switchHeightMode(id, 'direct');
+      } else if (source === 'slope') {
+        s.heightMode = 'direct';
+        document.querySelector(`input[name="height-mode-${id}"][value="direct"]`).checked = true;
+      }
+    }
+
+    function calculateHeightFromHipValley(id) {
+      const s = sections.find(x => x.id === id);
+      const hipValleyLength = parseFloat(s.hipValleyLength) || 0;
+      const slope = parseFloat(s.slope) || 0;
+      
+      if (hipValleyLength <= 0 || slope <= 0) {
+        s.height = 0;
+        updateUI(id);
+        return;
+      }
+      
+      // Trigonometry: hip/valley is the hypotenuse
+      // slope = rise/12, so rise = slope
+      // For a 12:slope pitch: hypotenuse = sqrt(12^2 + slope^2)
+      // Therefore: height = hipValleyLength * slope / sqrt(144 + slope^2)
+      
+      const hypotenuseFactor = Math.sqrt(144 + slope * slope);
+      s.height = (hipValleyLength * slope) / hypotenuseFactor;
+      
+      updateUI(id);
+    }
+
     function addSection() {
       const nextL = String.fromCharCode(65 + sections.length);
       const coverage = lastProfile === 'mechanical' ? 15.75 : 36;
-      const s = { id: Date.now(), name: nextL, ridge: '', eave: '', height: '', profile: lastProfile, coverage: coverage, eaveFold: 0, config: 'right', hasDormer: false, dormer: { left:0, width:0, bottom:0, top:0 }, topAgainstWall:false, leftAgainstWall:false, rightAgainstWall:false };
-      sections.push(s); renderSection(s);
+      const s = { 
+        id: Date.now(), 
+        name: nextL, 
+        ridge: '', 
+        eave: '', 
+        height: '', 
+        slope: 6,
+        hipValleyLength: '',
+        heightMode: 'direct',
+        profile: lastProfile, 
+        coverage: coverage, 
+        eaveFold: 0, 
+        config: 'right', 
+        hasDormer: false, 
+        dormer: { left:0, width:0, bottom:0, top:0 }, 
+        topAgainstWall:false, 
+        leftAgainstWall:false, 
+        rightAgainstWall:false 
+      };
+      sections.push(s); 
+      renderSection(s);
     }
     function validateAndSave() { if (!projectName.trim()) { alert("Please enter a Project Name."); return; } saveProjectAsHTML(); }
     function saveProjectAsHTML() { const data = `<script id="__saved_data__"> window.__SAVED_PROJECT__ = ${JSON.stringify({ projectName, sections })}; <\/script>`; const blob = new Blob([document.documentElement.outerHTML.replace('</head>', data + '</head>')], { type: 'text/html' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${projectName.replace(/[^a-z0-9]/gi, '_')}.html`; a.click(); }
@@ -340,12 +426,60 @@ function calculate(s) {
         </div>
         <div class="p-4">
           <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4 no-print">
-            <div><label class="text-[10px] font-black uppercase text-slate-400">Ridge (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'ridge', parseFloat(this.value))"></div>
-            <div><label class="text-[10px] font-black uppercase text-slate-400">Eave (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'eave', parseFloat(this.value))"></div>
-            <div><label class="text-[10px] font-black uppercase text-slate-400">Height (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'height', parseFloat(this.value))"></div>
-            <div><label class="text-[10px] font-black uppercase text-slate-400">Profile</label><select class="input-field" onchange="updateProfile(${s.id}, this.value)"><option value="tuff" ${s.profile==='tuff'?'selected':''}>Tuff (36")</option><option value="mechanical" ${s.profile==='mechanical'?'selected':''}>Mech (15.75")</option><option value="diamond" ${s.profile==='diamond'?'selected':''}>Diamond (36")</option></select><p id="cov-display-${s.id}" class="text-[9px] mt-1 text-slate-500 font-bold">${s.coverage}" Coverage</p></div>
-            <div><label class="text-[10px] font-black uppercase text-slate-400">Fold (In)</label><input type="number" class="input-field" oninput="updateVal(${s.id}, 'eaveFold', parseFloat(this.value))"></div>
-            <div><label class="text-[10px] font-black uppercase text-slate-400">Angle</label><select class="input-field" onchange="updateVal(${s.id}, 'config', this.value)"><option value="right">Right</option><option value="left">Left</option><option value="both">Both</option></select></div>
+            <div>
+              <label class="text-[10px] font-black uppercase text-slate-400">Ridge (In)</label>
+              <input type="number" class="input-field" oninput="updateVal(${s.id}, 'ridge', parseFloat(this.value))">
+            </div>
+            <div>
+              <label class="text-[10px] font-black uppercase text-slate-400">Eave (In)</label>
+              <input type="number" class="input-field" oninput="updateVal(${s.id}, 'eave', parseFloat(this.value))">
+            </div>
+            <div id="length-input-${s.id}">
+              <label class="text-[10px] font-black uppercase text-slate-400">Length (In)</label>
+              <input type="number" class="input-field" oninput="updateVal(${s.id}, 'height', parseFloat(this.value)); updateHeightMode(${s.id}, 'direct')" placeholder="Direct input">
+            </div>
+            <div id="slope-input-${s.id}">
+              <label class="text-[10px] font-black uppercase text-slate-400">Slope</label>
+              <div class="flex items-center gap-1">
+                <input type="number" class="input-field flex-1" oninput="updateVal(${s.id}, 'slope', parseFloat(this.value)); updateHeightMode(${s.id}, 'slope')" placeholder="Rise" min="0" step="0.1" value="${s.slope}">
+                <span class="text-slate-400 font-bold text-sm">/12</span>
+              </div>
+            </div>
+            <div id="hipvalley-input-${s.id}" style="display:none;">
+              <label class="text-[10px] font-black uppercase text-slate-400">Hip/Valley (In)</label>
+              <input type="number" class="input-field" oninput="updateVal(${s.id}, 'hipValleyLength', parseFloat(this.value)); calculateHeightFromHipValley(${s.id})" placeholder="Measured length">
+            </div>
+            <div>
+              <label class="text-[10px] font-black uppercase text-slate-400">Profile</label>
+              <select class="input-field" onchange="updateProfile(${s.id}, this.value)">
+                <option value="tuff" ${s.profile==='tuff'?'selected':''}>Tuff (36")</option>
+                <option value="mechanical" ${s.profile==='mechanical'?'selected':''}>Mech (15.75")</option>
+                <option value="diamond" ${s.profile==='diamond'?'selected':''}>Diamond (36")</option>
+              </select>
+              <p id="cov-display-${s.id}" class="text-[9px] mt-1 text-slate-500 font-bold">${s.coverage}" Coverage</p>
+            </div>
+            <div>
+              <label class="text-[10px] font-black uppercase text-slate-400">Fold (In)</label>
+              <input type="number" class="input-field" oninput="updateVal(${s.id}, 'eaveFold', parseFloat(this.value))">
+            </div>
+            <div>
+              <label class="text-[10px] font-black uppercase text-slate-400">Angle</label>
+              <select class="input-field" onchange="updateVal(${s.id}, 'config', this.value)">
+                <option value="right">Right</option>
+                <option value="left">Left</option>
+                <option value="both">Both</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-4 p-3 bg-slate-50 rounded-lg border no-print">
+            <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 cursor-pointer">
+              <input type="radio" name="height-mode-${s.id}" value="direct" onchange="switchHeightMode(${s.id}, 'direct')" checked>
+              Use Direct Length Input
+            </label>
+            <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 cursor-pointer mt-2">
+              <input type="radio" name="height-mode-${s.id}" value="calculated" onchange="switchHeightMode(${s.id}, 'calculated')">
+              Calculate from Hip/Valley/Gable Length
+            </label>
           </div>
           <div class="grid lg:grid-cols-4 gap-4">
             <div class="lg:col-span-3 bg-slate-50 rounded-xl border min-h-[300px] flex items-center justify-center p-2"><svg id="svg-${s.id}" viewBox="0 0 800 300" class="w-full h-auto"></svg></div>
