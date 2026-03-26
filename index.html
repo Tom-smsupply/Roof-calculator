@@ -175,10 +175,7 @@ function calculate(s) {
   const cov = parseFloat(s.coverage)||0, r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0, h = parseFloat(s.height)||0, fold = parseFloat(s.eaveFold)||0;
   if (cov <= 0 || (r <= 0 && e <= 0)) return null;
   const maxW = Math.max(r, e), totalP = Math.ceil(maxW / cov), data = [];
-  
-  // Calculate the slope factor: how much the panel length changes per unit horizontal distance
-  const hDiff = Math.abs(r - e);
-  const slopeFactor = hDiff > 0 ? h / hDiff : 0; // vertical rise per horizontal unit
+  const hDiff = Math.abs(r - e), slope = hDiff > 0 ? h / hDiff : 0;
 
   // For 'both' (centered gable): pre-compute the flat zone boundaries
   const minRE = Math.min(r, e);
@@ -193,42 +190,38 @@ function calculate(s) {
 
     let base;
     if (s.config === 'both') {
-      // For centered gable with angled sides
+      // Symmetric calculation for centered gable
       if (startX < flatStart) {
-        // Left angled region: calculate slope length
-        const distFromFlatStart = flatStart - startX;
-        const distFromFlatEnd = flatStart - endX;
-        // Average the two distances to get the slope length for this panel
-        const avgDist = (distFromFlatStart + distFromFlatEnd) / 2;
-        const verticalRise = avgDist * slopeFactor;
-        base = Math.sqrt(avgDist * avgDist + verticalRise * verticalRise);
+        // Left angled region
+        const distIntoAngle = flatStart - Math.min(endX, flatStart);
+        const verticalRise = distIntoAngle * slope;
+        base = Math.sqrt(distIntoAngle * distIntoAngle + verticalRise * verticalRise);
       } else if (startX >= flatEnd) {
-        // Right angled region: calculate slope length
-        const distFromFlatEnd = startX - flatEnd;
-        const distFromFlatEndEnd = endX - flatEnd;
-        // Average the two distances to get the slope length for this panel
-        const avgDist = (distFromFlatEnd + distFromFlatEndEnd) / 2;
-        const verticalRise = avgDist * slopeFactor;
-        base = Math.sqrt(avgDist * avgDist + verticalRise * verticalRise);
+        // Right angled region
+        const distIntoAngle = startX - flatEnd;
+        const verticalRise = distIntoAngle * slope;
+        base = Math.sqrt(distIntoAngle * distIntoAngle + verticalRise * verticalRise);
       } else {
         // Flat center zone
         base = h;
       }
       base = Math.max(0, base);
     } else if (s.config === 'left') {
-      const distFromEdge = maxW - Math.min(r, e) - endX;
-      if (distFromEdge > 0) {
-        const verticalRise = distFromEdge * slopeFactor;
-        base = Math.sqrt(distFromEdge * distFromEdge + verticalRise * verticalRise);
+      const distFromEdge = maxW - Math.min(r, e);
+      if (endX < distFromEdge) {
+        const distIntoAngle = distFromEdge - endX;
+        const verticalRise = distIntoAngle * slope;
+        base = Math.sqrt(distIntoAngle * distIntoAngle + verticalRise * verticalRise);
       } else {
         base = h;
       }
     } else {
       // Right config
-      const distFromEdge = startX - Math.min(r, e);
-      if (distFromEdge > 0) {
-        const verticalRise = distFromEdge * slopeFactor;
-        base = Math.sqrt(distFromEdge * distFromEdge + verticalRise * verticalRise);
+      const distFromEdge = Math.min(r, e);
+      if (startX < distFromEdge) {
+        const distIntoAngle = distFromEdge - startX;
+        const verticalRise = distIntoAngle * slope;
+        base = Math.sqrt(distIntoAngle * distIntoAngle + verticalRise * verticalRise);
       } else {
         base = h;
       }
@@ -249,7 +242,6 @@ function calculate(s) {
   }
   return { panelData: data, maxW, coverage: cov };
 }
-
     function updateSummary() {
       let grandP = 0, grandIn = 0, grandSq = 0, tRidge = 0, tEave = 0, tVal = 0, tHip = 0, tGable = 0, tEndWall = 0, tSideWall = 0, mechSq = 0;
       sections.forEach(s => {
