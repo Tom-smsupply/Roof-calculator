@@ -229,7 +229,7 @@ function calculate(s) {
   return { panelData: data, maxW, coverage: cov };
 }
 
-   function updateSummary() {
+  function updateSummary() {
   let grandP = 0, grandIn = 0, grandSq = 0, actualSq = 0, tRidge = 0, tEave = 0, tVal = 0, tHip = 0, tGable = 0, tEndWall = 0, tSideWall = 0, mechSq = 0;
   sections.forEach(s => {
     const res = calculate(s);
@@ -289,7 +289,13 @@ function calculate(s) {
       }
       if (s.hasDormer) {
         const pH = h - (parseFloat(s.dormer.bottom)||0) - (parseFloat(s.dormer.top)||0);
-        if (pH > 0) tVal += 2 * Math.sqrt(Math.pow((parseFloat(s.dormer.width)||0)/2, 2) + pH*pH);
+        if (pH > 0) {
+          // Each side of dormer is a valley - calculate hypotenuse and apply same formula
+          const dormerHyp = Math.sqrt(Math.pow((parseFloat(s.dormer.width)||0)/2, 2) + pH*pH);
+          // Two sides, each gets: ceil(length/120) / 2
+          tVal += Math.ceil(dormerHyp / 120) / 2;
+          tVal += Math.ceil(dormerHyp / 120) / 2;
+        }
       }
       if (s.profile === 'mechanical') mechSq += sSq;
     }
@@ -443,7 +449,18 @@ function calculate(s) {
       const body = encodeURIComponent(`Hello Summit Metal Supply,\n\nI have created a roof project using the Summit Roof Calculator for "${projectName}".\n\nPlease find attached:\n1. The project file (automatically saved .html) – this contains all the inputs and can be reopened in the calculator.\n2. A PDF printout of the calculator results (generated via Print/PDF button) – this shows the summary and visuals.\n\nTotal Square Feet: ${document.getElementById('total-sq-ft').innerText}\nTotal Panels: ${document.getElementById('total-panels').innerText}\n\nPlease let me know the quote as soon as possible.\n\nThank you!`);
       window.location.href = `mailto:info@smsupply.ca?subject=Roof Calculator: ${projectName}&body=${body}`;
     }
-    function removeSection(id) { if (sections.length > 1) { sections = sections.filter(x => x.id !== id); document.getElementById(`section-${id}`).remove(); updateSummary(); } }
+    function removeSection(id) { 
+  if (sections.length > 1) { 
+    sections = sections.filter(x => x.id !== id); 
+    document.getElementById(`section-${id}`).remove(); 
+    updateSummary(); 
+  } else {
+    // If it's the last section, clear it and create a fresh one
+    sections = [];
+    document.getElementById(`section-${id}`).remove();
+    addSection();
+  }
+}
     function updateVal(id, f, val) { sections.find(x => x.id === id)[f] = val; updateUI(id); }
     function updateProfile(id, val) {
         const s = sections.find(x => x.id === id);
