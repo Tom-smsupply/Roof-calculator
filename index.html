@@ -192,16 +192,16 @@ function calculate(s) {
 
     let base;
     if (s.config === 'both') {
-      if (startX < flatStart) {
-        // Left angled region: use startX distance from left edge
-        const distFromEdge = startX;
-        base = distFromEdge * bothSlope;
-      } else if (endX > flatEnd) {
-        // Right angled region: use endX distance from right edge
-        const distFromEdge = maxW - endX;
-        base = distFromEdge * bothSlope;
+      if (endX <= flatStart) {
+        // Left angled region: panel is entirely in the angled zone
+        const distIntoAngle = flatStart - endX;
+        base = h - (distIntoAngle * bothSlope);
+      } else if (startX >= flatEnd) {
+        // Right angled region: panel is entirely in the angled zone
+        const distIntoAngle = startX - flatEnd;
+        base = h - (distIntoAngle * bothSlope);
       } else {
-        // Flat center zone
+        // Flat center zone (or panel overlaps flat zone)
         base = h;
       }
       base = Math.max(0, base);
