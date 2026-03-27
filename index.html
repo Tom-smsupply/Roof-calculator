@@ -56,10 +56,12 @@
     </div>
     <div id="summary-container" class="mb-8 bg-blue-900 text-white rounded-xl p-4 md:p-6 shadow-lg">
       <h2 class="text-xl font-bold mb-6 flex items-center gap-2"><i data-lucide="calculator"></i> Project Totals</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div class="bg-blue-800/40 p-4 rounded-lg"><p class="text-blue-200 text-xs uppercase font-black">Total Panels</p><p id="total-panels" class="text-3xl font-bold">0</p></div>
         <div class="bg-blue-800/40 p-4 rounded-lg"><p class="text-blue-200 text-xs uppercase font-black">Total Linear Feet</p><p class="text-3xl font-bold"><span id="total-linear-ft">0.0</span> ft</p></div>
-        <div class="bg-blue-800/40 p-4 rounded-lg"><p class="text-blue-200 text-xs uppercase font-black">Total Square Feet</p><p class="text-3xl font-bold"><span id="total-sq-ft">0</span> sq ft</p></div>
+        <div class="bg-blue-800/40 p-4 rounded-lg"><p class="text-blue-200 text-xs uppercase font-black">Panel Square Feet</p><p class="text-3xl font-bold"><span id="total-sq-ft">0</span> sq ft</p></div>
+        <div class="bg-blue-800/40 p-4 rounded-lg"><p class="text-blue-200 text-xs uppercase font-black">Actual Roof Area</p><p class="text-3xl font-bold"><span id="actual-sq-ft">0</span> sq ft</p></div>
+        <div class="bg-blue-800/40 p-4 rounded-lg"><p class="text-blue-200 text-xs uppercase font-black">Waste Factor</p><p class="text-3xl font-bold"><span id="waste-factor">0%</span></p></div>
       </div>
       <div class="mt-6 pt-6 border-t border-blue-800/30">
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -226,68 +228,78 @@ function calculate(s) {
   }
   return { panelData: data, maxW, coverage: cov };
 }
-   function updateSummary() {
-  let grandP = 0, grandIn = 0, grandSq = 0, tRidge = 0, tEave = 0, tVal = 0, tHip = 0, tGable = 0, tEndWall = 0, tSideWall = 0, mechSq = 0;
-  sections.forEach(s => {
-    const res = calculate(s);
-    if (res) {
-      grandP += res.panelData.length;
-      const sIn = res.panelData.reduce((sum, p) => sum + p.len, 0); grandIn += sIn;
-      const sSq = (sIn / 12) * (res.coverage / 12); grandSq += sSq;
-      const h = parseFloat(s.height)||0, r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0;
-      tEave += e;
-      if (s.topAgainstWall) tEndWall += r; else tRidge += r;
-      if (Math.abs(r-e) > 0.1 && h > 0) {
-         // For 'both' config, each side's horizontal run is half the difference
-         const sideRun = s.config === 'both' ? Math.abs(r-e) / 2 : Math.abs(r-e);
-         const hyp = Math.sqrt(Math.pow(sideRun, 2) + h*h);
-         
-         if (s.config === 'both') {
-           // Both sides are angled - check each for wall
-           if (s.leftAgainstWall) tSideWall += hyp;
-           else { if (r > e) tVal += Math.ceil(hyp / 120) / 2; else tHip += Math.ceil(hyp / 120) / 2; }
-           if (s.rightAgainstWall) tSideWall += hyp;
-           else { if (r > e) tVal += Math.ceil(hyp / 120) / 2; else tHip += Math.ceil(hyp / 120) / 2; }
-         } else {
-           if ((s.config === 'right' && s.rightAgainstWall) || (s.config === 'left' && s.leftAgainstWall)) tSideWall += hyp;
-           else { 
-             if (r > e) tVal += Math.ceil(hyp / 120) / 2; 
-             else tHip += Math.ceil(hyp / 120) / 2; 
-           }
-         }
-      }
-      // Gable trim - only for right/left configs, not for 'both'
-      if (h > 0) {
-        if (s.config === 'both') {
-          // 'both' config has no gables - the angled sides are hips/valleys, already counted above
-        } else {
-          const sqW = (s.config === 'right' && s.leftAgainstWall) || (s.config === 'left' && s.rightAgainstWall);
-          if (sqW) tSideWall += h; else tGable += h;
+
+    function updateSummary() {
+      let grandP = 0, grandIn = 0, grandSq = 0, actualSq = 0, tRidge = 0, tEave = 0, tVal = 0, tHip = 0, tGable = 0, tEndWall = 0, tSideWall = 0, mechSq = 0;
+      sections.forEach(s => {
+        const res = calculate(s);
+        if (res) {
+          grandP += res.panelData.length;
+          const sIn = res.panelData.reduce((sum, p) => sum + p.len, 0); grandIn += sIn;
+          const sSq = (sIn / 12) * (res.coverage / 12); grandSq += sSq;
+          const h = parseFloat(s.height)||0, r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0;
+          
+          // Calculate actual roof area (trapezoid formula)
+          if (h > 0 && (r > 0 || e > 0)) {
+            const roofArea = ((r + e) / 2) * h / 144; // convert sq inches to sq feet
+            actualSq += roofArea;
+          }
+          
+          tEave += e;
+          if (s.topAgainstWall) tEndWall += r; else tRidge += r;
+          if (Math.abs(r-e) > 0.1 && h > 0) {
+             // For 'both' config, each side's horizontal run is half the difference
+             const sideRun = s.config === 'both' ? Math.abs(r-e) / 2 : Math.abs(r-e);
+             const hyp = Math.sqrt(Math.pow(sideRun, 2) + h*h);
+             
+             if (s.config === 'both') {
+               // Both sides are angled - check each for wall
+               if (s.leftAgainstWall) tSideWall += hyp;
+               else { if (r > e) tVal += Math.ceil(hyp / 120) / 2; else tHip += Math.ceil(hyp / 120) / 2; }
+               if (s.rightAgainstWall) tSideWall += hyp;
+               else { if (r > e) tVal += Math.ceil(hyp / 120) / 2; else tHip += Math.ceil(hyp / 120) / 2; }
+             } else {
+               if ((s.config === 'right' && s.rightAgainstWall) || (s.config === 'left' && s.leftAgainstWall)) tSideWall += hyp;
+               else { 
+                 if (r > e) tVal += Math.ceil(hyp / 120) / 2; 
+                 else tHip += Math.ceil(hyp / 120) / 2; 
+               }
+             }
+          }
+          // Gable trim - only for right/left configs, not for 'both'
+          if (h > 0) {
+            if (s.config === 'both') {
+              // 'both' config has no gables - the angled sides are hips/valleys, already counted above
+            } else {
+              const sqW = (s.config === 'right' && s.leftAgainstWall) || (s.config === 'left' && s.rightAgainstWall);
+              if (sqW) tSideWall += h; else tGable += h;
+            }
+          }
+          if (s.hasDormer) {
+            const pH = h - (parseFloat(s.dormer.bottom)||0) - (parseFloat(s.dormer.top)||0);
+            if (pH > 0) tVal += 2 * Math.sqrt(Math.pow((parseFloat(s.dormer.width)||0)/2, 2) + pH*pH);
+          }
+          if (s.profile === 'mechanical') mechSq += sSq;
         }
-      }
-      if (s.hasDormer) {
-        const pH = h - (parseFloat(s.dormer.bottom)||0) - (parseFloat(s.dormer.top)||0);
-        if (pH > 0) tVal += 2 * Math.sqrt(Math.pow((parseFloat(s.dormer.width)||0)/2, 2) + pH*pH);
-      }
-      if (s.profile === 'mechanical') mechSq += sSq;
+      });
+      document.getElementById('total-panels').innerText = grandP;
+      document.getElementById('total-linear-ft').innerText = (grandIn / 12).toFixed(1);
+      document.getElementById('total-sq-ft').innerText = Math.ceil(grandSq);
+      document.getElementById('actual-sq-ft').innerText = Math.ceil(actualSq);
+      document.getElementById('waste-factor').innerText = actualSq > 0 ? ((grandSq / actualSq - 1) * 100).toFixed(1) + '%' : '0%';
+      document.getElementById('ridge-caps').innerText = Math.ceil(tRidge / 240);
+      document.getElementById('eave-trims').innerText = Math.ceil(tEave / 120);
+      document.getElementById('valley-flashing').innerText = Math.ceil(tVal);
+      document.getElementById('hip-caps').innerText = Math.ceil(tHip);
+      document.getElementById('gable-trim').innerText = Math.ceil(tGable / 120);
+      document.getElementById('end-wall-flashing').innerText = Math.ceil(tEndWall / 120);
+      document.getElementById('side-wall-flashing').innerText = Math.ceil(tSideWall / 120);
+      document.getElementById('total-screws').innerText = Math.ceil(mechSq > 0 ? grandSq / 1.25 : grandSq);
+      document.getElementById('clip-fasteners').innerText = Math.ceil(mechSq / 1.25);
+      document.getElementById('clips-tile').style.display = mechSq > 0 ? '' : 'none';
+      document.getElementById('end-wall-tile').style.display = tEndWall > 0 ? '' : 'none';
+      document.getElementById('side-wall-tile').style.display = tSideWall > 0 ? '' : 'none';
     }
-  });
-  document.getElementById('total-panels').innerText = grandP;
-  document.getElementById('total-linear-ft').innerText = (grandIn / 12).toFixed(1);
-  document.getElementById('total-sq-ft').innerText = Math.ceil(grandSq);
-  document.getElementById('ridge-caps').innerText = Math.ceil(tRidge / 240);
-  document.getElementById('eave-trims').innerText = Math.ceil(tEave / 120);
-  document.getElementById('valley-flashing').innerText = Math.ceil(tVal);
-  document.getElementById('hip-caps').innerText = Math.ceil(tHip);
-  document.getElementById('gable-trim').innerText = Math.ceil(tGable / 120);
-  document.getElementById('end-wall-flashing').innerText = Math.ceil(tEndWall / 120);
-  document.getElementById('side-wall-flashing').innerText = Math.ceil(tSideWall / 120);
-  document.getElementById('total-screws').innerText = Math.ceil(mechSq > 0 ? grandSq / 1.25 : grandSq);
-  document.getElementById('clip-fasteners').innerText = Math.ceil(mechSq / 1.25);
-  document.getElementById('clips-tile').style.display = mechSq > 0 ? '' : 'none';
-  document.getElementById('end-wall-tile').style.display = tEndWall > 0 ? '' : 'none';
-  document.getElementById('side-wall-tile').style.display = tSideWall > 0 ? '' : 'none';
-}
     function updateUI(id) {
       const s = sections.find(x => x.id === id), res = calculate(s), svg = document.getElementById(`svg-${id}`), list = document.getElementById(`list-${id}`);
       if (!res) return;
