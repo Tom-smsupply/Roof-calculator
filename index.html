@@ -241,10 +241,7 @@ function calculate(s) {
           if (Math.abs(r-e) > 0.1 && h > 0) {
              const hyp = Math.sqrt(Math.pow(Math.abs(r-e), 2) + h*h);
              if ((s.config === 'right' && s.rightAgainstWall) || (s.config === 'left' && s.leftAgainstWall)) tSideWall += hyp;
-             else { 
-               if (r > e) tVal += Math.ceil(hyp / 120) / 2; 
-               else tHip += Math.ceil(hyp / 120) / 2; 
-             }
+             else { if (r > e) tVal += hyp; else tHip += hyp; }
           }
           if (h > 0) {
             if (s.config === 'both') {
@@ -267,8 +264,8 @@ function calculate(s) {
       document.getElementById('total-sq-ft').innerText = Math.ceil(grandSq);
       document.getElementById('ridge-caps').innerText = Math.ceil(tRidge / 120);
       document.getElementById('eave-trims').innerText = Math.ceil(tEave / 120);
-      document.getElementById('valley-flashing').innerText = Math.ceil(tVal);
-      document.getElementById('hip-caps').innerText = Math.ceil(tHip);
+      document.getElementById('valley-flashing').innerText = Math.ceil(tVal / 120);
+      document.getElementById('hip-caps').innerText = Math.ceil(tHip / 120);
       document.getElementById('gable-trim').innerText = Math.ceil(tGable / 120);
       document.getElementById('end-wall-flashing').innerText = Math.ceil(tEndWall / 120);
       document.getElementById('side-wall-flashing').innerText = Math.ceil(tSideWall / 120);
