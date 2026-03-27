@@ -181,6 +181,8 @@ function calculate(s) {
   const minRE = Math.min(r, e);
   const flatStart = (maxW - minRE) / 2;
   const flatEnd = flatStart + minRE;
+  // For 'both' config, each side's slope is based on half the horizontal difference
+  const bothSlope = flatStart > 0 ? h / flatStart : 0;
 
   for (let i = 0; i < totalP; i++) {
     let startX, endX;
@@ -190,16 +192,14 @@ function calculate(s) {
 
     let base;
     if (s.config === 'both') {
-      // Symmetric calculation: use endX for left side (mirrors how 'left' config uses endX),
-      // and startX for right side — this ensures odd panel counts stay perfectly symmetric
       if (startX < flatStart) {
-        // Left angled region: distance of endX from flat zone start
-        const distIntoAngle = flatStart - Math.min(endX, flatStart);
-        base = h - (distIntoAngle * slope);
-      } else if (startX >= flatEnd) {
-        // Right angled region: distance of startX from flat zone end
-        const distIntoAngle = startX - flatEnd;
-        base = h - (distIntoAngle * slope);
+        // Left angled region: use startX distance from left edge
+        const distFromEdge = startX;
+        base = distFromEdge * bothSlope;
+      } else if (endX > flatEnd) {
+        // Right angled region: use endX distance from right edge
+        const distFromEdge = maxW - endX;
+        base = distFromEdge * bothSlope;
       } else {
         // Flat center zone
         base = h;
@@ -226,7 +226,6 @@ function calculate(s) {
   }
   return { panelData: data, maxW, coverage: cov };
 }
-
     function updateSummary() {
       let grandP = 0, grandIn = 0, grandSq = 0, tRidge = 0, tEave = 0, tVal = 0, tHip = 0, tGable = 0, tEndWall = 0, tSideWall = 0, mechSq = 0;
       sections.forEach(s => {
