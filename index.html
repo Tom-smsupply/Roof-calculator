@@ -112,7 +112,7 @@
           <ul class="list-disc pl-5 space-y-1">
             <li><strong>Ridge:</strong> Measurement across the very top.</li>
             <li><strong>Eave:</strong> Measurement across the bottom gutter line.</li>
-            <li><strong>Length:</strong> You can input this directly, OR calculate it from hip/valley/gable measurements using the slope.</li>
+            <li><strong>Length:</strong> You can input this directly, OR calculate it from the run using the slope.</li>
             <li><strong>Slope:</strong> Vertical rise over 12" run (e.g., 6/12 for a 6:12 pitch).</li>
             <li><strong>Fold / Overhang:</strong> Fold for Standing Seam; Overhang for Tuff/Diamond Rib.</li>
           </ul>
@@ -120,10 +120,10 @@
           <p>Choose one of two methods:</p>
           <ul class="list-disc pl-5 space-y-1">
             <li><strong>Direct Length Input:</strong> If you know the slope length (on the roof plane) from ridge to eave, enter it directly in the Length field. This is the actual panel length needed.</li>
-            <li><strong>Calculate from Hip/Valley/Gable:</strong> If you have a 2D plan:
+            <li><strong>Calculate from Run:</strong> If you have a 2D plan or know the horizontal distance:
               <ul class="list-circle pl-5 mt-2">
-                <li>For roofs where eave = ridge (flat gable): Enter the horizontal run distance.</li>
-                <li>For roofs where eave ≠ ridge: Enter the hip/valley flat measurement (the horizontal distance of the angled edge).</li>
+                <li>Enter the horizontal run (flat distance from eave to ridge).</li>
+                <li>The calculator will compute: slope length = run × √(1 + (pitch/12)²)</li>
               </ul>
             </li>
           </ul>
@@ -315,20 +315,22 @@ function calculate(s) {
       s.heightMode = mode;
       
       const lengthInput = document.getElementById(`length-input-${id}`);
-      const hipValleyInput = document.getElementById(`hipvalley-input-${id}`);
+      const runInput = document.getElementById(`run-input-${id}`);
       const lengthField = lengthInput.querySelector('input');
-      const hipValleyField = hipValleyInput.querySelector('input');
+      const runField = runInput.querySelector('input');
       
       if (mode === 'direct') {
         lengthInput.style.opacity = '1';
         lengthField.disabled = false;
-        hipValleyInput.style.display = 'none';
-        hipValleyField.disabled = true;
+        runInput.style.display = 'none';
+        runField.disabled = true;
       } else {
         lengthInput.style.opacity = '0.5';
         lengthField.disabled = true;
-        hipValleyInput.style.display = '';
-        hipValleyField.disabled = false;
+        runInput.style.display = '';
+        runField.disabled = false;
+        // Recalculate height from run when switching to calculated mode
+        calculateHeightFromRun(id);
       }
       
       updateUI(id);
@@ -340,38 +342,35 @@ function calculate(s) {
         s.heightMode = 'direct';
         document.querySelector(`input[name="height-mode-${id}"][value="direct"]`).checked = true;
         switchHeightMode(id, 'direct');
-      } else if (source === 'slope') {
-        s.heightMode = 'direct';
-        document.querySelector(`input[name="height-mode-${id}"][value="direct"]`).checked = true;
       }
     }
 
-    function calculateHeightFromHipValley(id) {
+    function calculateHeightFromRun(id) {
       const s = sections.find(x => x.id === id);
-      const flatMeasurement = parseFloat(s.hipValleyLength) || 0;
+      const run = parseFloat(s.run) || 0;
       const slope = parseFloat(s.slope) || 0;
-      const ridge = parseFloat(s.ridge) || 0;
-      const eave = parseFloat(s.eave) || 0;
       
-      if (flatMeasurement <= 0 || slope <= 0) {
+      if (run <= 0 || slope <= 0) {
         s.height = 0;
         updateUI(id);
         return;
       }
       
-      // If ridge and eave are equal, it's a simple gable (flat sides)
-      // Use: slopeLength = flatMeasurement * sqrt(1 + (slope/12)^2)
-      if (Math.abs(ridge - eave) < 0.01) {
-        const slopeFactor = Math.sqrt(1 + (slope / 12) * (slope / 12));
-        s.height = flatMeasurement * slopeFactor;
-      } else {
-        // If ridge and eave are different, the flatMeasurement is the hip/valley flat distance
-        // slopeLength = flatMeasurement * sqrt(1 + (slope/12)^2)
-        const slopeFactor = Math.sqrt(1 + (slope / 12) * (slope / 12));
-        s.height = flatMeasurement * slopeFactor;
-      }
+      // Calculate slope length from run: slopeLength = run × √(1 + (pitch/12)²)
+      const slopeFactor = Math.sqrt(1 + (slope / 12) * (slope / 12));
+      s.height = run * slopeFactor;
       
       updateUI(id);
+    }
+
+    function updateSlope(id, value) {
+      const s = sections.find(x => x.id === id);
+      s.slope = parseFloat(value) || 0;
+      
+      // If in calculated mode, recalculate the height when slope changes
+      if (s.heightMode === 'calculated') {
+        calculateHeightFromRun(id);
+      }
     }
 
     function addSection() {
@@ -384,7 +383,7 @@ function calculate(s) {
         eave: '', 
         height: '', 
         slope: 6,
-        hipValleyLength: '',
+        run: '',
         heightMode: 'direct',
         profile: lastProfile, 
         coverage: coverage, 
@@ -452,13 +451,13 @@ function calculate(s) {
             <div id="slope-input-${s.id}">
               <label class="text-[10px] font-black uppercase text-slate-400">Slope</label>
               <div class="flex items-center gap-1">
-                <input type="number" class="input-field flex-1" oninput="updateVal(${s.id}, 'slope', parseFloat(this.value)); if(document.querySelector('input[name=height-mode-${s.id}][value=calculated]').checked) calculateHeightFromHipValley(${s.id})" placeholder="Rise" min="0" step="0.1" value="${s.slope}">
+                <input type="number" class="input-field flex-1" oninput="updateSlope(${s.id}, this.value)" placeholder="Rise" min="0" step="0.1" value="${s.slope}">
                 <span class="text-slate-400 font-bold text-sm">/12</span>
               </div>
             </div>
-            <div id="hipvalley-input-${s.id}" style="display:none;">
-              <label class="text-[10px] font-black uppercase text-slate-400">Flat Measurement (In)</label>
-              <input type="number" class="input-field" oninput="updateVal(${s.id}, 'hipValleyLength', parseFloat(this.value)); calculateHeightFromHipValley(${s.id})" placeholder="Flat distance">
+            <div id="run-input-${s.id}" style="display:none;">
+              <label class="text-[10px] font-black uppercase text-slate-400">Run (In)</label>
+              <input type="number" class="input-field" oninput="updateVal(${s.id}, 'run', parseFloat(this.value)); calculateHeightFromRun(${s.id})" placeholder="Horizontal distance">
             </div>
             <div>
               <label class="text-[10px] font-black uppercase text-slate-400">Profile</label>
@@ -489,7 +488,7 @@ function calculate(s) {
             </label>
             <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 cursor-pointer mt-2">
               <input type="radio" name="height-mode-${s.id}" value="calculated" onchange="switchHeightMode(${s.id}, 'calculated')">
-              Calculate from Flat Measurement
+              Calculate from Run (horizontal distance)
             </label>
           </div>
           <div class="grid lg:grid-cols-4 gap-4">
