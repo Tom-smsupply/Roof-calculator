@@ -190,41 +190,25 @@ function calculate(s) {
 
     let base;
     if (s.config === 'both') {
-      // Symmetric calculation for centered gable
+      // Symmetric calculation: use endX for left side (mirrors how 'left' config uses endX),
+      // and startX for right side — this ensures odd panel counts stay perfectly symmetric
       if (startX < flatStart) {
-        // Left angled region
+        // Left angled region: distance of endX from flat zone start
         const distIntoAngle = flatStart - Math.min(endX, flatStart);
-        const verticalRise = distIntoAngle * slope;
-        base = Math.sqrt(distIntoAngle * distIntoAngle + verticalRise * verticalRise);
+        base = h - (distIntoAngle * slope);
       } else if (startX >= flatEnd) {
-        // Right angled region
+        // Right angled region: distance of startX from flat zone end
         const distIntoAngle = startX - flatEnd;
-        const verticalRise = distIntoAngle * slope;
-        base = Math.sqrt(distIntoAngle * distIntoAngle + verticalRise * verticalRise);
+        base = h - (distIntoAngle * slope);
       } else {
         // Flat center zone
         base = h;
       }
       base = Math.max(0, base);
     } else if (s.config === 'left') {
-      const distFromEdge = maxW - Math.min(r, e);
-      if (endX < distFromEdge) {
-        const distIntoAngle = distFromEdge - endX;
-        const verticalRise = distIntoAngle * slope;
-        base = Math.sqrt(distIntoAngle * distIntoAngle + verticalRise * verticalRise);
-      } else {
-        base = h;
-      }
+      base = endX < (maxW - Math.min(r,e)) ? h - ((maxW - Math.min(r,e) - endX) * slope) : h;
     } else {
-      // Right config
-      const distFromEdge = Math.min(r, e);
-      if (startX < distFromEdge) {
-        const distIntoAngle = distFromEdge - startX;
-        const verticalRise = distIntoAngle * slope;
-        base = Math.sqrt(distIntoAngle * distIntoAngle + verticalRise * verticalRise);
-      } else {
-        base = h;
-      }
+      base = startX < Math.min(r,e) ? h : h - ((startX - Math.min(r,e)) * slope);
     }
 
     if (s.hasDormer) {
@@ -242,6 +226,7 @@ function calculate(s) {
   }
   return { panelData: data, maxW, coverage: cov };
 }
+
     function updateSummary() {
       let grandP = 0, grandIn = 0, grandSq = 0, tRidge = 0, tEave = 0, tVal = 0, tHip = 0, tGable = 0, tEndWall = 0, tSideWall = 0, mechSq = 0;
       sections.forEach(s => {
