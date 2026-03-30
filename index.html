@@ -232,7 +232,12 @@ function calculate(s) {
           // Shed dormer: rectangular cutout
           // Only add "under" panel if bottom > 0
           if (d.bottom > 0) {
-            data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: startX });
+            // The "under" panel length accounts for the roof angle
+            const dormerBottomHeight = h - d.bottom; // height from dormer bottom to ridge
+            const underLength = Math.max(0, base - dormerBottomHeight);
+            if (underLength > 0) {
+              data.push({ len: Math.ceil(underLength + fold), type: 'under', xPos: startX });
+            }
           }
           // Only add "over" panel if top > 0
           if (d.top > 0) {
