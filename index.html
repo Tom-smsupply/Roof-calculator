@@ -224,7 +224,8 @@ function calculate(s) {
 
     if (s.hasDormer) {
       const d = s.dormer, dR = d.left + d.width;
-      if (startX >= d.left && endX <= dR) {
+      const effectiveStartX = Math.max(0, startX);
+      if (effectiveStartX >= d.left && endX <= dR) {
         // Panel is entirely within dormer zone
         
         if (d.isShed) {
@@ -234,9 +235,6 @@ function calculate(s) {
             data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: startX });
           }
           // Only add "over" panel if top > 0
-          // The "over" panel length = base (full panel at this position) - (h - top)
-          // Which simplifies to: base - dormerHeight - bottom = base - (h - top - bottom) - bottom = top - (h - base)
-          // Actually: over panel = top + (base - h) when base < h, or just top when base = h
           if (d.top > 0) {
             const dormerTopHeight = h - d.top; // height from eave to top of dormer
             const overLength = Math.max(0, base - dormerTopHeight);
