@@ -234,34 +234,23 @@ function calculate(s) {
             data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: startX });
           }
           // Only add "over" panel if top > 0
+          // The "over" panel length = base (full panel at this position) - (h - top)
+          // Which simplifies to: base - dormerHeight - bottom = base - (h - top - bottom) - bottom = top - (h - base)
+          // Actually: over panel = top + (base - h) when base < h, or just top when base = h
           if (d.top > 0) {
-            data.push({ len: Math.ceil(d.top + fold), type: 'over', xPos: startX });
+            const dormerTopHeight = h - d.top; // height from eave to top of dormer
+            const overLength = Math.max(0, base - dormerTopHeight);
+            if (overLength > 0) {
+              data.push({ len: Math.ceil(overLength + fold), type: 'over', xPos: startX });
+            }
           }
         } else {
-          // Standard triangular dormer
+          // Standard triangular dormer - unchanged
           data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: startX });
           const pH = h - d.bottom - d.top, mid = d.left + d.width / 2;
           const getDH = (x) => Math.max(0, pH * (1 - Math.abs(x - mid) / (d.width / 2)));
           const minDormerHeight = Math.min(getDH(startX), getDH(endX));
           data.push({ len: Math.ceil(d.top + (pH - minDormerHeight)), type: 'over', xPos: startX });
-        }
-        continue;
-      }
-      
-      // Check if panel partially overlaps the dormer (for shed dormer edge panels)
-      if (d.isShed && ((startX < d.left && endX > d.left) || (startX < dR && endX > dR))) {
-        // Panel overlaps the edge of the shed dormer
-        // Calculate the shortened length based on where the cutout intersects
-        const dormerHeight = h - d.bottom - d.top;
-        
-        if (startX < d.left && endX > d.left) {
-          // Panel overlaps left edge of dormer - use the portion outside the dormer
-          // The panel runs from startX to d.left, rest is cut out
-          // For now, treat as standard panel (the visible portion)
-          data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard', xPos: startX });
-        } else if (startX < dR && endX > dR) {
-          // Panel overlaps right edge of dormer
-          data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard', xPos: startX });
         }
         continue;
       }
