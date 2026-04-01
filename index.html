@@ -651,16 +651,22 @@ function calculate(s) {
       }
     }
 
-    if (window.__SAVED_PROJECT__) {
-      projectName = window.__SAVED_PROJECT__.projectName;
-      document.getElementById('project-name').value = projectName;
-      sections = window.__SAVED_PROJECT__.sections;
-      if (sections.length > 0) {
-        lastProfile = sections[0].profile || 'tuff';
-      }
-      sections.forEach(renderSection);
-    } else { addSection(); }
-    lucide.createIcons();
-  </script>
-</body>
+    // Initialize
+if (window.__SAVED_PROJECT__) {
+  // Clear any pre-rendered sections from saved HTML
+  document.getElementById('sections-container').innerHTML = '';
+  
+  projectName = window.__SAVED_PROJECT__.projectName;
+  document.getElementById('project-name').value = projectName;
+  sections = window.__SAVED_PROJECT__.sections;
+  pairings = window.__SAVED_PROJECT__.pairings || [];
+  if (sections.length > 0) lastProfile = sections[0].profile || 'tuff';
+  sections.forEach(renderSection);
+  renderPairings();
+} else {
+  addSection();
+}
+lucide.createIcons();
+   </script>
+</body> 
 </html>
