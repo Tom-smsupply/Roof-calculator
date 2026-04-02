@@ -154,26 +154,107 @@
     </div>
   </div>
   <div id="dormer-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-overlay">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
-      <div class="p-4 border-b bg-slate-50 flex justify-between items-center"><h3 class="font-bold">Dormer Settings (Inches)</h3><button onclick="closeDormerModal()">×</button></div>
-      <div class="p-6 space-y-4">
-        <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" id="m-dormer-shed" onchange="saveDormerData()" class="w-4 h-4">
-            <span class="font-bold text-amber-800">Shed Dormer / Roof Cutout</span>
-          </label>
-          <p class="text-xs text-amber-700 mt-1">Check for rectangular cutout (4 sides) instead of standard triangular dormer (3 sides)</p>
-        </div>
-        <div><label class="text-[10px] font-bold text-slate-500 uppercase">Left to Dormer (In)</label><input type="number" id="m-dormer-left" class="input-field mt-1" oninput="saveDormerData()"></div>
-        <div><label class="text-[10px] font-bold text-slate-500 uppercase">Width (In)</label><input type="number" id="m-dormer-width" class="input-field mt-1" oninput="saveDormerData()"></div>
-        <div class="grid grid-cols-2 gap-4">
-          <div><label class="text-[10px] font-bold text-slate-500 uppercase">Eave to Dormer (In)</label><input type="number" id="m-dormer-bottom" class="input-field mt-1" oninput="saveDormerData()"></div>
-          <div><label class="text-[10px] font-bold text-slate-500 uppercase">Ridge to Dormer (In)</label><input type="number" id="m-dormer-top" class="input-field mt-1" oninput="saveDormerData()"></div>
+  <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden max-h-[90vh] overflow-y-auto">
+    <div class="p-4 border-b bg-slate-50 flex justify-between items-center sticky top-0">
+      <h3 class="font-bold">Dormer Settings (Inches)</h3>
+      <button onclick="closeDormerModal()" class="text-2xl leading-none">&times;</button>
+    </div>
+    <div class="p-4 space-y-3">
+      
+      <!-- Dormer 1 -->
+      <div class="border rounded-lg overflow-hidden">
+        <label class="flex items-center gap-2 p-3 bg-slate-100 cursor-pointer">
+          <input type="checkbox" id="m-dormer-1-enabled" onchange="toggleDormerFields(1); saveDormerData()" class="w-4 h-4">
+          <span class="font-bold text-slate-700">Dormer 1</span>
+        </label>
+        <div id="m-dormer-1-fields" class="p-3 space-y-3 hidden">
+          <div class="p-2 bg-amber-50 border border-amber-200 rounded-lg">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="m-dormer-1-shed" onchange="saveDormerData()" class="w-4 h-4">
+              <span class="font-semibold text-amber-800 text-sm">Shed Dormer / Roof Cutout</span>
+            </label>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Left to Dormer</label><input type="number" id="m-dormer-1-left" class="input-field mt-1" oninput="saveDormerData()"></div>
+            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Width</label><input type="number" id="m-dormer-1-width" class="input-field mt-1" oninput="saveDormerData()"></div>
+            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Eave to Dormer</label><input type="number" id="m-dormer-1-bottom" class="input-field mt-1" oninput="saveDormerData()"></div>
+            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Ridge to Dormer</label><input type="number" id="m-dormer-1-top" class="input-field mt-1" oninput="saveDormerData()"></div>
+          </div>
         </div>
       </div>
-      <div class="p-4 bg-slate-50 text-right"><button onclick="closeDormerModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Save</button></div>
+
+      <!-- Dormer 2 -->
+      <div class="border rounded-lg overflow-hidden">
+        <label class="flex items-center gap-2 p-3 bg-slate-100 cursor-pointer">
+          <input type="checkbox" id="m-dormer-2-enabled" onchange="toggleDormerFields(2); saveDormerData()" class="w-4 h-4">
+          <span class="font-bold text-slate-700">Dormer 2</span>
+        </label>
+        <div id="m-dormer-2-fields" class="p-3 space-y-3 hidden">
+          <div class="p-2 bg-amber-50 border border-amber-200 rounded-lg">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="m-dormer-2-shed" onchange="saveDormerData()" class="w-4 h-4">
+              <span class="font-semibold text-amber-800 text-sm">Shed Dormer / Roof Cutout</span>
+            </label>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Left to Dormer</label><input type="number" id="m-dormer-2-left" class="input-field mt-1" oninput="saveDormerData()"></div>
+            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Width</label><input type="number" id="m-dormer-2-width" class="input-field mt-1" oninput="saveDormerData()"></div>
+            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Eave to Dormer</label><input type="number" id="m-dormer-2-bottom" class="input-field mt-1" oninput="saveDormerData()"></div>
+            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Ridge to Dormer</label><input type="number" id="m-dormer-2-top" class="input-field mt-1" oninput="saveDormerData()"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dormer 3 -->
+      <div class="border rounded-lg overflow-hidden">
+        <label class="flex items-center gap-2 p-3 bg-slate-100 cursor-pointer">
+          <input type="checkbox" id="m-dormer-3-enabled" onchange="toggleDormerFields(3); saveDormerData()" class="w-4 h-4">
+          <span class="font-bold text-slate-700">Dormer 3</span>
+        </label>
+        <div id="m-dormer-3-fields" class="p-3 space-y-3 hidden">
+          <div class="p-2 bg-amber-50 border border-amber-200 rounded-lg">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="m-dormer-3-shed" onchange="saveDormerData()" class="w-4 h-4">
+              <span class="font-semibold text-amber-800 text-sm">Shed Dormer / Roof Cutout</span>
+            </label>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Left to Dormer</label><input type="number" id="m-dormer-3-left" class="input-field mt-1" oninput="saveDormerData()"></div>
+            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Width</label><input type="number" id="m-dormer-3-width" class="input-field mt-1" oninput="saveDormerData()"></div>
+            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Eave to Dormer</label><input type="number" id="m-dormer-3-bottom" class="input-field mt-1" oninput="saveDormerData()"></div>
+            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Ridge to Dormer</label><input type="number" id="m-dormer-3-top" class="input-field mt-1" oninput="saveDormerData()"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dormer 4 -->
+      <div class="border rounded-lg overflow-hidden">
+        <label class="flex items-center gap-2 p-3 bg-slate-100 cursor-pointer">
+          <input type="checkbox" id="m-dormer-4-enabled" onchange="toggleDormerFields(4); saveDormerData()" class="w-4 h-4">
+          <span class="font-bold text-slate-700">Dormer 4</span>
+        </label>
+        <div id="m-dormer-4-fields" class="p-3 space-y-3 hidden">
+          <div class="p-2 bg-amber-50 border border-amber-200 rounded-lg">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="m-dormer-4-shed" onchange="saveDormerData()" class="w-4 h-4">
+              <span class="font-semibold text-amber-800 text-sm">Shed Dormer / Roof Cutout</span>
+            </label>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Left to Dormer</label><input type="number" id="m-dormer-4-left" class="input-field mt-1" oninput="saveDormerData()"></div>
+            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Width</label><input type="number" id="m-dormer-4-width" class="input-field mt-1" oninput="saveDormerData()"></div>
+            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Eave to Dormer</label><input type="number" id="m-dormer-4-bottom" class="input-field mt-1" oninput="saveDormerData()"></div>
+            <div><label class="text-[10px] font-bold text-slate-500 uppercase">Ridge to Dormer</label><input type="number" id="m-dormer-4-top" class="input-field mt-1" oninput="saveDormerData()"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="p-4 bg-slate-50 text-right sticky bottom-0">
+      <button onclick="closeDormerModal()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Save</button>
     </div>
   </div>
+</div>
   <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
   <script>
     let activeDormerId = null, projectName = '', sections = [], lastProfile = 'tuff';
@@ -188,13 +269,22 @@ function calculate(s) {
   if (cov <= 0 || (r <= 0 && e <= 0)) return null;
   const maxW = Math.max(r, e), totalP = Math.ceil(maxW / cov), data = [];
   const hDiff = Math.abs(r - e), slope = hDiff > 0 ? h / hDiff : 0;
-
-  // For 'both' (centered gable): pre-compute the flat zone boundaries
+  
   const minRE = Math.min(r, e);
   const flatStart = (maxW - minRE) / 2;
   const flatEnd = flatStart + minRE;
-  // For 'both' config, each side's slope is based on half the horizontal difference
   const bothSlope = flatStart > 0 ? h / flatStart : 0;
+
+  // Get enabled dormers (handle both old and new format)
+  let enabledDormers = [];
+  if (s.hasDormer) {
+    if (s.dormers) {
+      enabledDormers = s.dormers.filter(d => d.enabled);
+    } else if (s.dormer) {
+      // Backwards compatibility
+      enabledDormers = [s.dormer];
+    }
+  }
 
   for (let i = 0; i < totalP; i++) {
     let startX, endX;
@@ -205,15 +295,12 @@ function calculate(s) {
     let base;
     if (s.config === 'both') {
       if (endX <= flatStart) {
-        // Left angled region: panel is entirely in the angled zone
         const distIntoAngle = flatStart - endX;
         base = h - (distIntoAngle * bothSlope);
       } else if (startX >= flatEnd) {
-        // Right angled region: panel is entirely in the angled zone
         const distIntoAngle = startX - flatEnd;
         base = h - (distIntoAngle * bothSlope);
       } else {
-        // Flat center zone (or panel overlaps flat zone)
         base = h;
       }
       base = Math.max(0, base);
@@ -223,154 +310,168 @@ function calculate(s) {
       base = startX < Math.min(r,e) ? h : h - ((startX - Math.min(r,e)) * slope);
     }
 
-    if (s.hasDormer) {
-      const d = s.dormer, dR = d.left + d.width;
-      const effectiveStartX = Math.max(0, startX);
+    // Check if panel falls within any enabled dormer
+    let panelHandled = false;
+    const effectiveStartX = Math.max(0, startX);
+
+    for (const d of enabledDormers) {
+      const dR = d.left + d.width;
+      
       if (effectiveStartX >= d.left && endX <= dR) {
-        // Panel is entirely within dormer zone
+        // Panel is entirely within this dormer zone
+        panelHandled = true;
         
         if (d.isShed) {
           // Shed dormer: rectangular cutout
-          // Only add "under" panel if bottom > 0
           if (d.bottom > 0) {
-            // The "under" panel length accounts for the roof angle
-            const dormerBottomHeight = h - d.bottom; // height from dormer bottom to ridge
+            const dormerBottomHeight = h - d.bottom;
             const underLength = Math.max(0, base - dormerBottomHeight);
             if (underLength > 0) {
               data.push({ len: Math.ceil(underLength + fold), type: 'under', xPos: startX });
             }
           }
-          // Only add "over" panel if top > 0
           if (d.top > 0) {
-            const dormerTopHeight = h - d.top; // height from eave to top of dormer
+            const dormerTopHeight = h - d.top;
             const overLength = Math.max(0, base - dormerTopHeight);
             if (overLength > 0) {
               data.push({ len: Math.ceil(overLength + fold), type: 'over', xPos: startX });
             }
           }
         } else {
-          // Standard triangular dormer - unchanged
+          // Standard triangular dormer
           data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: startX });
           const pH = h - d.bottom - d.top, mid = d.left + d.width / 2;
           const getDH = (x) => Math.max(0, pH * (1 - Math.abs(x - mid) / (d.width / 2)));
           const minDormerHeight = Math.min(getDH(startX), getDH(endX));
           data.push({ len: Math.ceil(d.top + (pH - minDormerHeight)), type: 'over', xPos: startX });
         }
-        continue;
+        break; // Panel handled by this dormer, no need to check others
       }
     }
-    data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard', xPos: startX });
+
+    if (!panelHandled) {
+      data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard', xPos: startX });
+    }
   }
   return { panelData: data, maxW, coverage: cov };
 }
-    function updateSummary() {
-      let grandP = 0, grandIn = 0, grandSq = 0, actualSq = 0, tRidge = 0, tEave = 0, tVal = 0, tHip = 0, tGable = 0, tEndWall = 0, tSideWall = 0, mechSq = 0;
-      sections.forEach(s => {
-        const res = calculate(s);
-        if (res) {
-          grandP += res.panelData.length;
-          const sIn = res.panelData.reduce((sum, p) => sum + p.len, 0); grandIn += sIn;
-          const sSq = (sIn / 12) * (res.coverage / 12); grandSq += sSq;
-          const h = parseFloat(s.height)||0, r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0;
-          
-          // Calculate actual roof area (trapezoid formula)
-          if (h > 0 && (r > 0 || e > 0)) {
-            let roofArea = ((r + e) / 2) * h / 144; // convert sq inches to sq feet
-            
-            // If section has a dormer, subtract the dormer's area (it's counted in a separate section)
-            if (s.hasDormer) {
-              const d = s.dormer;
-              const dormerHeight = h - d.bottom - d.top;
-              if (dormerHeight > 0 && d.width > 0) {
-                if (d.isShed) {
-                  // Shed dormer is a rectangle: area = width × height
-                  const dormerArea = (d.width * dormerHeight) / 144;
-                  roofArea -= dormerArea;
-                } else {
-                  // Standard dormer is a triangle: area = (base × height) / 2
-                  const dormerArea = (d.width * dormerHeight) / 2 / 144;
-                  roofArea -= dormerArea;
-                }
-              }
-            }
-            
-            actualSq += roofArea;
+   function updateSummary() {
+  let grandP = 0, grandIn = 0, grandSq = 0, actualSq = 0, tRidge = 0, tEave = 0, tVal = 0, tHip = 0, tGable = 0, tEndWall = 0, tSideWall = 0, mechSq = 0;
+  sections.forEach(s => {
+    const res = calculate(s);
+    if (res) {
+      grandP += res.panelData.length;
+      const sIn = res.panelData.reduce((sum, p) => sum + p.len, 0); grandIn += sIn;
+      const sSq = (sIn / 12) * (res.coverage / 12); grandSq += sSq;
+      const h = parseFloat(s.height)||0, r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0;
+      
+      // Calculate actual roof area (trapezoid formula)
+      if (h > 0 && (r > 0 || e > 0)) {
+        let roofArea = ((r + e) / 2) * h / 144; // convert sq inches to sq feet
+        
+        // If section has dormers, subtract their area
+        if (s.hasDormer) {
+          let enabledDormers = [];
+          if (s.dormers) {
+            enabledDormers = s.dormers.filter(d => d.enabled);
+          } else if (s.dormer) {
+            enabledDormers = [s.dormer];
           }
           
-          tEave += e;
-          if (s.topAgainstWall) tEndWall += r; else tRidge += r;
-          if (Math.abs(r-e) > 0.1 && h > 0) {
-             // For 'both' config, each side's horizontal run is half the difference
-             const sideRun = s.config === 'both' ? Math.abs(r-e) / 2 : Math.abs(r-e);
-             const hyp = Math.sqrt(Math.pow(sideRun, 2) + h*h);
-             
-             if (s.config === 'both') {
-               // Both sides are angled - check each for wall
-               if (s.leftAgainstWall) tSideWall += hyp;
-               else { if (r > e) tVal += Math.ceil(hyp / 120) / 2; else tHip += Math.ceil(hyp / 120) / 2; }
-               if (s.rightAgainstWall) tSideWall += hyp;
-               else { if (r > e) tVal += Math.ceil(hyp / 120) / 2; else tHip += Math.ceil(hyp / 120) / 2; }
-             } else {
-               if ((s.config === 'right' && s.rightAgainstWall) || (s.config === 'left' && s.leftAgainstWall)) tSideWall += hyp;
-               else { 
-                 if (r > e) tVal += Math.ceil(hyp / 120) / 2; 
-                 else tHip += Math.ceil(hyp / 120) / 2; 
-               }
-             }
-          }
-          // Gable trim - only for right/left configs, not for 'both'
-          if (h > 0) {
-            if (s.config === 'both') {
-              // 'both' config has no gables - the angled sides are hips/valleys, already counted above
-            } else {
-              const sqW = (s.config === 'right' && s.leftAgainstWall) || (s.config === 'left' && s.rightAgainstWall);
-              if (sqW) tSideWall += h; else tGable += h;
-            }
-          }
-          if (s.hasDormer) {
-            const d = s.dormer;
-            const dormerHeight = h - (parseFloat(d.bottom)||0) - (parseFloat(d.top)||0);
-            if (dormerHeight > 0) {
+          enabledDormers.forEach(d => {
+            const dormerHeight = h - d.bottom - d.top;
+            if (dormerHeight > 0 && d.width > 0) {
               if (d.isShed) {
-                // Shed dormer: side wall flashing on both sides (not divided by 2)
-                // Each side = dormerHeight (slope length of the cutout sides)
-                tSideWall += Math.ceil(dormerHeight / 120) * 120; // Left side
-                tSideWall += Math.ceil(dormerHeight / 120) * 120; // Right side
-                
-                // End wall flashing at bottom if eave to dormer > 6 inches
-                if (d.bottom > 6) {
-                  tEndWall += d.width;
-                }
+                const dormerArea = (d.width * dormerHeight) / 144;
+                roofArea -= dormerArea;
               } else {
-                // Standard dormer: valley flashing on both angled sides
-                const dormerHyp = Math.sqrt(Math.pow((parseFloat(d.width)||0)/2, 2) + dormerHeight*dormerHeight);
-                // Two sides, each gets: ceil(length/120) / 2
-                tVal += Math.ceil(dormerHyp / 120) / 2;
-                tVal += Math.ceil(dormerHyp / 120) / 2;
+                const dormerArea = (d.width * dormerHeight) / 2 / 144;
+                roofArea -= dormerArea;
               }
             }
-          }
-          if (s.profile === 'mechanical') mechSq += sSq;
+          });
         }
-      });
-      document.getElementById('total-panels').innerText = grandP;
-      document.getElementById('total-linear-ft').innerText = (grandIn / 12).toFixed(1);
-      document.getElementById('total-sq-ft').innerText = Math.ceil(grandSq);
-      document.getElementById('actual-sq-ft').innerText = Math.ceil(actualSq);
-      document.getElementById('waste-factor').innerText = actualSq > 0 ? ((grandSq / actualSq - 1) * 100).toFixed(1) + '%' : '0%';
-      document.getElementById('ridge-caps').innerText = Math.ceil(tRidge / 240);
-      document.getElementById('eave-trims').innerText = Math.ceil(tEave / 120);
-      document.getElementById('valley-flashing').innerText = Math.ceil(tVal);
-      document.getElementById('hip-caps').innerText = Math.ceil(tHip);
-      document.getElementById('gable-trim').innerText = Math.ceil(tGable / 120);
-      document.getElementById('end-wall-flashing').innerText = Math.ceil(tEndWall / 120);
-      document.getElementById('side-wall-flashing').innerText = Math.ceil(tSideWall / 120);
-      document.getElementById('total-screws').innerText = Math.ceil(mechSq > 0 ? grandSq / 1.25 : grandSq);
-      document.getElementById('clip-fasteners').innerText = Math.ceil(mechSq / 1.25);
-      document.getElementById('clips-tile').style.display = mechSq > 0 ? '' : 'none';
-      document.getElementById('end-wall-tile').style.display = tEndWall > 0 ? '' : 'none';
-      document.getElementById('side-wall-tile').style.display = tSideWall > 0 ? '' : 'none';
+        
+        actualSq += roofArea;
+      }
+      
+      tEave += e;
+      if (s.topAgainstWall) tEndWall += r; else tRidge += r;
+      if (Math.abs(r-e) > 0.1 && h > 0) {
+         const sideRun = s.config === 'both' ? Math.abs(r-e) / 2 : Math.abs(r-e);
+         const hyp = Math.sqrt(Math.pow(sideRun, 2) + h*h);
+         
+         if (s.config === 'both') {
+           if (s.leftAgainstWall) tSideWall += hyp;
+           else { if (r > e) tVal += Math.ceil(hyp / 120) / 2; else tHip += Math.ceil(hyp / 120) / 2; }
+           if (s.rightAgainstWall) tSideWall += hyp;
+           else { if (r > e) tVal += Math.ceil(hyp / 120) / 2; else tHip += Math.ceil(hyp / 120) / 2; }
+         } else {
+           if ((s.config === 'right' && s.rightAgainstWall) || (s.config === 'left' && s.leftAgainstWall)) tSideWall += hyp;
+           else { 
+             if (r > e) tVal += Math.ceil(hyp / 120) / 2; 
+             else tHip += Math.ceil(hyp / 120) / 2; 
+           }
+         }
+      }
+      // Gable trim - only for right/left configs, not for 'both'
+      if (h > 0) {
+        if (s.config === 'both') {
+          // 'both' config has no gables - the angled sides are hips/valleys, already counted above
+        } else {
+          const sqW = (s.config === 'right' && s.leftAgainstWall) || (s.config === 'left' && s.rightAgainstWall);
+          if (sqW) tSideWall += h; else tGable += h;
+        }
+      }
+      
+      // Dormer trim calculations
+      if (s.hasDormer) {
+        let enabledDormers = [];
+        if (s.dormers) {
+          enabledDormers = s.dormers.filter(d => d.enabled);
+        } else if (s.dormer) {
+          enabledDormers = [s.dormer];
+        }
+        
+        enabledDormers.forEach(d => {
+          const dormerHeight = h - (parseFloat(d.bottom)||0) - (parseFloat(d.top)||0);
+          if (dormerHeight > 0) {
+            if (d.isShed) {
+              tSideWall += Math.ceil(dormerHeight / 120) * 120;
+              tSideWall += Math.ceil(dormerHeight / 120) * 120;
+              if (d.bottom > 6) {
+                tEndWall += d.width;
+              }
+            } else {
+              const dormerHyp = Math.sqrt(Math.pow((parseFloat(d.width)||0)/2, 2) + dormerHeight*dormerHeight);
+              tVal += Math.ceil(dormerHyp / 120) / 2;
+              tVal += Math.ceil(dormerHyp / 120) / 2;
+            }
+          }
+        });
+      }
+      
+      if (s.profile === 'mechanical') mechSq += sSq;
     }
+  });
+  document.getElementById('total-panels').innerText = grandP;
+  document.getElementById('total-linear-ft').innerText = (grandIn / 12).toFixed(1);
+  document.getElementById('total-sq-ft').innerText = Math.ceil(grandSq);
+  document.getElementById('actual-sq-ft').innerText = Math.ceil(actualSq);
+  document.getElementById('waste-factor').innerText = actualSq > 0 ? ((grandSq / actualSq - 1) * 100).toFixed(1) + '%' : '0%';
+  document.getElementById('ridge-caps').innerText = Math.ceil(tRidge / 240);
+  document.getElementById('eave-trims').innerText = Math.ceil(tEave / 120);
+  document.getElementById('valley-flashing').innerText = Math.ceil(tVal);
+  document.getElementById('hip-caps').innerText = Math.ceil(tHip);
+  document.getElementById('gable-trim').innerText = Math.ceil(tGable / 120);
+  document.getElementById('end-wall-flashing').innerText = Math.ceil(tEndWall / 120);
+  document.getElementById('side-wall-flashing').innerText = Math.ceil(tSideWall / 120);
+  document.getElementById('total-screws').innerText = Math.ceil(mechSq > 0 ? grandSq / 1.25 : grandSq);
+  document.getElementById('clip-fasteners').innerText = Math.ceil(mechSq / 1.25);
+  document.getElementById('clips-tile').style.display = mechSq > 0 ? '' : 'none';
+  document.getElementById('end-wall-tile').style.display = tEndWall > 0 ? '' : 'none';
+  document.getElementById('side-wall-tile').style.display = tSideWall > 0 ? '' : 'none';
+}
     function updateUI(id) {
       const s = sections.find(x => x.id === id), res = calculate(s), svg = document.getElementById(`svg-${id}`), list = document.getElementById(`list-${id}`);
       if (!res) return;
@@ -390,20 +491,28 @@ function calculate(s) {
         pLabels += `<g><rect x="${lX-12}" y="${lY-8}" width="24" height="16" fill="white" fill-opacity="0.9" rx="4"/><text x="${lX}" y="${lY+5}" font-size="10" font-weight="900" fill="${p.type==='standard'?'#1e40af':'#ef4444'}" text-anchor="middle">${p.len}</text></g>`;
       });
       let dSvg = ''; 
-      if (s.hasDormer) {
-        let dX = m + (s.dormer.left * scale);
-        if (s.config === 'both') dX = m + (w-2*m-res.maxW*scale)/2 + (s.dormer.left * scale);
-        let dY = (h-m) - s.dormer.bottom*hScale, dW = s.dormer.width*scale;
-        
-        if (s.dormer.isShed) {
-          // Shed dormer: draw rectangle
-          let dTopY = m + s.dormer.top*hScale;
-          dSvg = `<rect x="${dX}" y="${dTopY}" width="${dW}" height="${dY - dTopY}" fill="white" fill-opacity="0.4" stroke="red" stroke-width="2" stroke-dasharray="4"/>`;
-        } else {
-          // Standard dormer: draw triangle
-          dSvg = `<polygon points="${dX},${dY} ${dX+dW},${dY} ${dX+dW/2},${m+s.dormer.top*hScale}" fill="white" fill-opacity="0.4" stroke="red" stroke-width="2" stroke-dasharray="4"/>`;
-        }
-      }
+if (s.hasDormer) {
+  // Get enabled dormers (handle both old and new format)
+  let enabledDormers = [];
+  if (s.dormers) {
+    enabledDormers = s.dormers.filter(d => d.enabled);
+  } else if (s.dormer) {
+    enabledDormers = [s.dormer];
+  }
+  
+  enabledDormers.forEach(d => {
+    let dX = m + (d.left * scale);
+    if (s.config === 'both') dX = m + (w-2*m-res.maxW*scale)/2 + (d.left * scale);
+    let dY = (h-m) - d.bottom*hScale, dW = d.width*scale;
+    
+    if (d.isShed) {
+      let dTopY = m + d.top*hScale;
+      dSvg += `<rect x="${dX}" y="${dTopY}" width="${dW}" height="${dY - dTopY}" fill="white" fill-opacity="0.4" stroke="red" stroke-width="2" stroke-dasharray="4"/>`;
+    } else {
+      dSvg += `<polygon points="${dX},${dY} ${dX+dW},${dY} ${dX+dW/2},${m+d.top*hScale}" fill="white" fill-opacity="0.4" stroke="red" stroke-width="2" stroke-dasharray="4"/>`;
+    }
+  });
+}
       svg.innerHTML = `<polygon points="${eX},${h-m} ${eX+eW},${h-m} ${rX+rW},${m} ${rX},${m}" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>${pLines}${dSvg}${pLabels}`;
       let summaryMap = [];
       res.panelData.forEach(p => {
@@ -492,7 +601,12 @@ function calculate(s) {
         eaveFold: 0, 
         config: 'right', 
         hasDormer: false, 
-        dormer: { left:0, width:0, bottom:0, top:0, isShed: false }, 
+       dormers: [
+  { enabled: false, left: 0, width: 0, bottom: 0, top: 0, isShed: false },
+  { enabled: false, left: 0, width: 0, bottom: 0, top: 0, isShed: false },
+  { enabled: false, left: 0, width: 0, bottom: 0, top: 0, isShed: false },
+  { enabled: false, left: 0, width: 0, bottom: 0, top: 0, isShed: false }
+], 
         topAgainstWall:false, 
         leftAgainstWall:false, 
         rightAgainstWall:false 
@@ -529,34 +643,84 @@ function calculate(s) {
         document.getElementById(`cov-display-${id}`).innerText = s.coverage + '" Coverage';
         updateUI(id);
     }
-    function toggleDormer(id, chk) { 
-      const s = sections.find(x => x.id === id); 
-      s.hasDormer = chk; 
-      if (chk) openDormerModal(id); 
-      else updateUI(id); 
-    }
-    function openDormerModal(id) { 
-      activeDormerId = id; 
-      const s = sections.find(x => x.id === id);
-      // Populate modal with existing values
-      document.getElementById('m-dormer-shed').checked = s.dormer.isShed || false;
-      document.getElementById('m-dormer-left').value = s.dormer.left || '';
-      document.getElementById('m-dormer-width').value = s.dormer.width || '';
-      document.getElementById('m-dormer-bottom').value = s.dormer.bottom || '';
-      document.getElementById('m-dormer-top').value = s.dormer.top || '';
-      document.getElementById('dormer-modal').classList.remove('hidden'); 
-    }
-    function closeDormerModal() { document.getElementById('dormer-modal').classList.add('hidden'); updateUI(activeDormerId); }
-    function saveDormerData() { 
-      const s = sections.find(x => x.id === activeDormerId); 
-      s.dormer = { 
-        left: parseFloat(document.getElementById('m-dormer-left').value)||0, 
-        width: parseFloat(document.getElementById('m-dormer-width').value)||0, 
-        bottom: parseFloat(document.getElementById('m-dormer-bottom').value)||0, 
-        top: parseFloat(document.getElementById('m-dormer-top').value)||0,
-        isShed: document.getElementById('m-dormer-shed').checked
-      }; 
-    }
+    function toggleDormerFields(num) {
+  const enabled = document.getElementById(`m-dormer-${num}-enabled`).checked;
+  const fields = document.getElementById(`m-dormer-${num}-fields`);
+  if (enabled) {
+    fields.classList.remove('hidden');
+  } else {
+    fields.classList.add('hidden');
+  }
+}
+
+function toggleDormer(id, chk) { 
+  const s = sections.find(x => x.id === id); 
+  s.hasDormer = chk; 
+  if (chk) openDormerModal(id); 
+  else updateUI(id); 
+}
+
+function openDormerModal(id) { 
+  activeDormerId = id; 
+  const s = sections.find(x => x.id === id);
+  
+  // Handle backwards compatibility - convert old dormer to new dormers array
+  if (s.dormer && !s.dormers) {
+    s.dormers = [
+      { enabled: true, left: s.dormer.left || 0, width: s.dormer.width || 0, bottom: s.dormer.bottom || 0, top: s.dormer.top || 0, isShed: s.dormer.isShed || false },
+      { enabled: false, left: 0, width: 0, bottom: 0, top: 0, isShed: false },
+      { enabled: false, left: 0, width: 0, bottom: 0, top: 0, isShed: false },
+      { enabled: false, left: 0, width: 0, bottom: 0, top: 0, isShed: false }
+    ];
+    delete s.dormer;
+  }
+  
+  // Initialize dormers if not present
+  if (!s.dormers) {
+    s.dormers = [
+      { enabled: false, left: 0, width: 0, bottom: 0, top: 0, isShed: false },
+      { enabled: false, left: 0, width: 0, bottom: 0, top: 0, isShed: false },
+      { enabled: false, left: 0, width: 0, bottom: 0, top: 0, isShed: false },
+      { enabled: false, left: 0, width: 0, bottom: 0, top: 0, isShed: false }
+    ];
+  }
+  
+  // Populate modal with existing values for all 4 dormers
+  for (let i = 1; i <= 4; i++) {
+    const d = s.dormers[i-1];
+    document.getElementById(`m-dormer-${i}-enabled`).checked = d.enabled || false;
+    document.getElementById(`m-dormer-${i}-shed`).checked = d.isShed || false;
+    document.getElementById(`m-dormer-${i}-left`).value = d.left || '';
+    document.getElementById(`m-dormer-${i}-width`).value = d.width || '';
+    document.getElementById(`m-dormer-${i}-bottom`).value = d.bottom || '';
+    document.getElementById(`m-dormer-${i}-top`).value = d.top || '';
+    toggleDormerFields(i);
+  }
+  
+  document.getElementById('dormer-modal').classList.remove('hidden'); 
+}
+
+function closeDormerModal() { 
+  document.getElementById('dormer-modal').classList.add('hidden'); 
+  updateUI(activeDormerId); 
+}
+
+function saveDormerData() { 
+  const s = sections.find(x => x.id === activeDormerId);
+  if (!s) return;
+  
+  s.dormers = [];
+  for (let i = 1; i <= 4; i++) {
+    s.dormers.push({
+      enabled: document.getElementById(`m-dormer-${i}-enabled`).checked,
+      left: parseFloat(document.getElementById(`m-dormer-${i}-left`).value) || 0,
+      width: parseFloat(document.getElementById(`m-dormer-${i}-width`).value) || 0,
+      bottom: parseFloat(document.getElementById(`m-dormer-${i}-bottom`).value) || 0,
+      top: parseFloat(document.getElementById(`m-dormer-${i}-top`).value) || 0,
+      isShed: document.getElementById(`m-dormer-${i}-shed`).checked
+    });
+  }
+}
     function toggleWall(id, f, chk) { sections.find(x => x.id === id)[f] = chk; updateSummary(); }
    function renderSection(s) {
   const div = document.createElement('div'); 
