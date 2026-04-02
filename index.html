@@ -321,22 +321,23 @@ function calculate(s) {
     // Panel is entirely within this dormer zone
     panelHandled = true;
     
-    if (d.isShed) {
-      // Shed dormer: rectangular cutout
-      if (d.bottom > 0) {
-        const dormerBottomHeight = h - d.bottom;
-        const underLength = Math.max(0, base - dormerBottomHeight);
-        if (underLength > 0) {
-          data.push({ len: Math.ceil(underLength + fold), type: 'under', xPos: startX });
-        }
-      }
-      if (d.top > 0) {
-        const dormerTopHeight = h - d.top;
-        const overLength = Math.max(0, base - dormerTopHeight);
-        if (overLength > 0) {
-          data.push({ len: Math.ceil(overLength + fold), type: 'over', xPos: startX });
-        }
-      }
+   if (d.isShed) {
+  // Shed dormer: rectangular cutout
+  // "under" panel is the distance from eave to dormer bottom
+  // Only add if the roof extends far enough at this panel position
+  if (d.bottom > 0 && base > d.bottom) {
+    data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: startX });
+  }
+  
+  // "over" panel: from dormer top to the roof edge at this panel position
+  const dormerTopFromEave = h - d.top; // where dormer top is (from eave)
+  if (d.top > 0 && base > dormerTopFromEave) {
+    const overLength = Math.max(0, base - dormerTopFromEave);
+    if (overLength > 0) {
+      data.push({ len: Math.ceil(overLength + fold), type: 'over', xPos: startX });
+    }
+  }
+}
     } else {
       // Standard triangular dormer
       data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: startX });
