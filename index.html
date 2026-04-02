@@ -23,7 +23,53 @@
     #install-banner { display: none; }
     @media (max-width: 768px) { .section-label { font-size: 1.5rem; padding: 8px 20px; min-width: 100px; } svg, table { max-width: 100% !important; height: auto; } }
     .print-only { display: none; }
-    @media print { .no-print { display: none !important; } .print-only { display: block !important; } #summary-container { page-break-after: always; break-after: page; } }
+    @media print {
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  
+  /* One section per page */
+  #sections-container > div {
+    page-break-after: always;
+    break-after: page;
+  }
+  
+  /* Don't break inside a section */
+  #sections-container > div {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  /* Smaller section label for print */
+  .section-label {
+    font-size: 1.5rem !important;
+    padding: 8px 20px !important;
+    min-width: 80px !important;
+  }
+  
+  /* Make sure summary stays on first page */
+  #summary-container {
+    page-break-after: always;
+    break-after: page;
+  }
+  
+  /* Reduce padding for print */
+  body {
+    padding: 0.5rem !important;
+  }
+  
+  .p-4 {
+    padding: 0.5rem !important;
+  }
+  
+  .p-6, .md\\:p-6 {
+    padding: 0.75rem !important;
+  }
+  
+  /* Ensure SVG diagram fits on page */
+  svg {
+    max-height: 250px !important;
+  }
+}
     .modal-overlay { background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); }
   </style>
 </head>
@@ -532,8 +578,8 @@ if (s.hasDormer) {
           let existing = summaryMap.find(item => item.len === p.len && item.type === p.type);
           if (existing) existing.count++; else summaryMap.push({ len: p.len, type: p.type, count: 1 });
       });
-      list.innerHTML = `<table class="w-full text-xs"><thead><tr class="bg-slate-50 border-b"><th class="p-2 text-left">Qty</th><th class="p-2 text-right">Len</th></tr></thead><tbody>` +
-        summaryMap.map(i => `<tr class="border-b"><td class="p-2 font-bold">${i.count}</td><td class="p-2 text-right font-bold">${i.len}"${i.type!=='standard'?' ('+i.type+')':''}</td></tr>`).join('') + `</tbody></table>`;
+      list.innerHTML = `<table class="w-full text-xs"><thead><tr class="bg-slate-50 border-b"><th class="p-2 text-left">Qty</th><th class="p-2 text-left">Length</th></tr></thead><tbody>` +
+  summaryMap.map(i => `<tr class="border-b"><td class="p-2 font-bold">${i.count}</td><td class="p-2 font-bold">${i.len}"${i.type!=='standard'?' ('+i.type+')':''}</td></tr>`).join('') + `</tbody></table>`;
       updateSummary();
     }
 
