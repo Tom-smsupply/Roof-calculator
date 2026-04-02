@@ -314,7 +314,7 @@ function calculate(s) {
     let panelHandled = false;
     const effectiveStartX = Math.max(0, startX);
 
-   for (const d of enabledDormers) {
+  for (const d of enabledDormers) {
   const dR = d.left + d.width;
   
   if (effectiveStartX >= d.left && endX <= dR) {
