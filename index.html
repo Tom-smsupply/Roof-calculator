@@ -314,54 +314,54 @@ function calculate(s) {
     let panelHandled = false;
     const effectiveStartX = Math.max(0, startX);
 
-  for (const d of enabledDormers) {
-  const dR = d.left + d.width;
-  
-  if (effectiveStartX >= d.left && endX <= dR) {
-    // Panel is entirely within this dormer zone
-    panelHandled = true;
-    
-   if (d.isShed) {
-  // Shed dormer: rectangular cutout
-  // "under" panel is the distance from eave to dormer bottom
-  // Only add if the roof extends far enough at this panel position
-  if (d.bottom > 0 && base > d.bottom) {
-    data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: startX });
-  }
-  
-  // "over" panel: from dormer top to the roof edge at this panel position
-  const dormerTopFromEave = h - d.top; // where dormer top is (from eave)
-  if (d.top > 0 && base > dormerTopFromEave) {
-    const overLength = Math.max(0, base - dormerTopFromEave);
-    if (overLength > 0) {
-      data.push({ len: Math.ceil(overLength + fold), type: 'over', xPos: startX });
+    for (const d of enabledDormers) {
+      const dR = d.left + d.width;
+      
+      if (effectiveStartX >= d.left && endX <= dR) {
+        // Panel is entirely within this dormer zone
+        panelHandled = true;
+        
+        if (d.isShed) {
+          // Shed dormer: rectangular cutout
+          // "under" panel is the distance from eave to dormer bottom
+          // Only add if the roof extends far enough at this panel position
+          if (d.bottom > 0 && base > d.bottom) {
+            data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: startX });
+          }
+          
+          // "over" panel: from dormer top to the roof edge at this panel position
+          const dormerTopFromEave = h - d.top; // where dormer top is (from eave)
+          if (d.top > 0 && base > dormerTopFromEave) {
+            const overLength = Math.max(0, base - dormerTopFromEave);
+            if (overLength > 0) {
+              data.push({ len: Math.ceil(overLength + fold), type: 'over', xPos: startX });
+            }
+          }
+        } else {
+          // Standard triangular dormer
+          data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: startX });
+          
+          // Calculate "over" panel accounting for angled roof sections
+          const dormerBottomFromEave = d.bottom;
+          const dormerTopFromEave = h - d.top; // where dormer peak is (from eave)
+          const pH = dormerTopFromEave - dormerBottomFromEave; // dormer height
+          const mid = d.left + d.width / 2;
+          
+          // Get dormer height at this panel position (triangular shape)
+          const getDH = (x) => Math.max(0, pH * (1 - Math.abs(x - mid) / (d.width / 2)));
+          const minDormerHeight = Math.min(getDH(Math.max(0, startX)), getDH(endX));
+          
+          // The "over" panel is from where the dormer ends (at this panel) to the roof edge
+          const dormerTopAtPanel = dormerBottomFromEave + minDormerHeight;
+          
+          // "over" length = base (actual roof height) - dormerTopAtPanel
+          const overLength = Math.max(0, base - dormerTopAtPanel);
+          data.push({ len: Math.ceil(overLength + fold), type: 'over', xPos: startX });
+        }
+        break; // Panel handled by this dormer, no need to check others
+      }
     }
-  }
-}
-    } else {
-      // Standard triangular dormer
-      data.push({ len: Math.ceil(d.bottom + fold), type: 'under', xPos: startX });
-      
-      // Calculate "over" panel accounting for angled roof sections
-      const dormerBottomFromEave = d.bottom;
-      const dormerTopFromEave = h - d.top; // where dormer peak is (from eave)
-      const pH = dormerTopFromEave - dormerBottomFromEave; // dormer height
-      const mid = d.left + d.width / 2;
-      
-      // Get dormer height at this panel position (triangular shape)
-      const getDH = (x) => Math.max(0, pH * (1 - Math.abs(x - mid) / (d.width / 2)));
-      const minDormerHeight = Math.min(getDH(Math.max(0, startX)), getDH(endX));
-      
-      // The "over" panel is from where the dormer ends (at this panel) to the roof edge
-      const dormerTopAtPanel = dormerBottomFromEave + minDormerHeight;
-      
-      // "over" length = base (actual roof height) - dormerTopAtPanel
-      const overLength = Math.max(0, base - dormerTopAtPanel);
-      data.push({ len: Math.ceil(overLength + fold), type: 'over', xPos: startX });
-    }
-    break; // Panel handled by this dormer, no need to check others
-  }
-}
+
     if (!panelHandled) {
       data.push({ len: Math.ceil(Math.max(0, base + fold)), type: 'standard', xPos: startX });
     }
