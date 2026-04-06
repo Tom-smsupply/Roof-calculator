@@ -745,11 +745,15 @@ for (let row = 0; row <= res.totalRows; row++) {
         startX = m;
       }
       
-    const offset = rowInfo.staggered ? (11 * scale) : 0;
-const shinglesInRow = rowInfo.shingles;
+   const shinglesInRow = rowInfo.shingles;
+
+// For staggered rows, shift by half shingle width
+// For 'both' config, we need to shift left (negative) to maintain center alignment
+const offset = rowInfo.staggered ? (11 * scale) : 0;
+const staggerDirection = (s.config === 'both') ? -1 : 1;
 
 for (let col = -1; col <= shinglesInRow + 1; col++) {
-  let x = startX + (col * shingleWidth * scale) + offset;
+  let x = startX + (col * shingleWidth * scale) + (offset * staggerDirection);
   gridLines += `<line x1="${x}" y1="${rowBottomY}" x2="${x}" y2="${rowTopY}" stroke="#94a3b8" stroke-width="1" />`;
 }
       }
