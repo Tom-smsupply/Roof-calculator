@@ -745,12 +745,11 @@ for (let row = 0; row <= res.totalRows; row++) {
         startX = m;
       }
       
-      const offset = rowInfo.staggered ? (11 * scale) : 0;
-      const shinglesInRow = rowInfo.shingles;
-      
-      for (let col = 0; col <= shinglesInRow; col++) {
-        let x = startX + (col * shingleWidth * scale) - offset;
-       if (x >= startX && x <= startX + rowWidthScaled) {
+    const offset = rowInfo.staggered ? (11 * scale) : 0;
+const shinglesInRow = rowInfo.shingles;
+
+for (let col = -1; col <= shinglesInRow + 1; col++) {
+  let x = startX + (col * shingleWidth * scale) + offset;
   gridLines += `<line x1="${x}" y1="${rowBottomY}" x2="${x}" y2="${rowTopY}" stroke="#94a3b8" stroke-width="1" />`;
 }
       }
