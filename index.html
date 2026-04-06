@@ -1022,7 +1022,7 @@ function calculate(s) {
   } else {
     s.coverage = 36;
   }
-  document.getElementById(`cov-${id}`).innerText = val === 'shingle' ? '10.625" x 22"' : s.coverage + '" Coverage';
+  document.getElementById(`cov-display-${id}`).innerText = val === 'shingle' ? '10.625" x 22"' : s.coverage + '" Coverage';
   updateUI(id);
 }
     function toggleDormerFields(num) {
