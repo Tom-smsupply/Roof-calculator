@@ -721,13 +721,13 @@ function calculate(s) {
     const shingleWidth = 22;
     const shingleHeight = 10.625;
     
-    // Draw horizontal row lines
-    for (let row = 0; row <= res.totalRows; row++) {
-      const y = (h-m) - (row * shingleHeight * hScale);
-      if (y >= m) {
-        gridLines += `<line x1="${eX}" y1="${y}" x2="${eX + eWscaled}" y2="${y}" stroke="#cbd5e1" stroke-dasharray="4" />`;
-      }
-    }
+   // Draw horizontal row lines
+for (let row = 0; row <= res.totalRows; row++) {
+  const y = (h-m) - (row * shingleHeight * hScale);
+  if (y >= m) {
+    gridLines += `<line x1="${eX}" y1="${y}" x2="${eX + eWscaled}" y2="${y}" stroke="#94a3b8" stroke-width="1.5" />`;
+  }
+} 
     
     // Draw vertical shingle lines (accounting for stagger)
     res.rowData.forEach((rowInfo, idx) => {
@@ -750,9 +750,9 @@ function calculate(s) {
       
       for (let col = 0; col <= shinglesInRow; col++) {
         let x = startX + (col * shingleWidth * scale) - offset;
-        if (x >= startX && x <= startX + rowWidthScaled) {
-          gridLines += `<line x1="${x}" y1="${rowBottomY}" x2="${x}" y2="${rowTopY}" stroke="#cbd5e1" stroke-dasharray="2" />`;
-        }
+       if (x >= startX && x <= startX + rowWidthScaled) {
+  gridLines += `<line x1="${x}" y1="${rowBottomY}" x2="${x}" y2="${rowTopY}" stroke="#94a3b8" stroke-width="1" />`;
+}
       }
     });
     
@@ -780,8 +780,16 @@ function calculate(s) {
       });
     }
     
-    // Draw roof shape and grid
-    svg.innerHTML = `<polygon points="${eX},${h-m} ${eX+eWscaled},${h-m} ${rX+rWscaled},${m} ${rX},${m}" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>${gridLines}${dSvg}`;
+   // Draw roof shape and grid with clipping
+svg.innerHTML = `
+  <defs>
+    <clipPath id="roof-clip-${id}">
+      <polygon points="${eX},${h-m} ${eX+eWscaled},${h-m} ${rX+rWscaled},${m} ${rX},${m}"/>
+    </clipPath>
+  </defs>
+  <polygon points="${eX},${h-m} ${eX+eWscaled},${h-m} ${rX+rWscaled},${m} ${rX},${m}" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+  <g clip-path="url(#roof-clip-${id})">${gridLines}</g>
+  ${dSvg}`;
     
     // Shingle summary list
     list.innerHTML = `<table class="w-full text-xs"><thead><tr class="bg-slate-50 border-b"><th class="p-2 text-left">Item</th><th class="p-2 text-left">Qty</th></tr></thead><tbody>
