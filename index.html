@@ -481,9 +481,20 @@ function calculate(s) {
     }
     rowWidth = Math.max(0, rowWidth);
     
-   // Account for stagger on even rows
+  // Account for stagger on even rows
 const isStaggered = row % 2 === 1;
 let shinglesInRow = rowWidth > 0 ? Math.ceil(rowWidth / shingleWidth) : 0;
+
+// Staggered rows need extra shingles to cover the offset
+if (isStaggered && shinglesInRow > 0) {
+  if (s.config === 'both') {
+    // Both sides exposed - need extra shingle for each side
+    shinglesInRow += 2;
+  } else {
+    // Only one side exposed - need 1 extra shingle
+    shinglesInRow += 1;
+  }
+}
 
 // Staggered rows need extra shingles to cover the offset
 if (isStaggered && shinglesInRow > 0) {
