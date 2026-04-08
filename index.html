@@ -22,6 +22,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="logo.png">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@latest/font/lucide.css"/>
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; overflow-x: hidden; overscroll-behavior-y: contain; }
@@ -85,6 +86,41 @@
   </style>
 </head>
 <body class="min-h-screen bg-slate-50 p-2 md:p-8">
+  <!-- Authentication Modal -->
+<div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+    <div class="p-6 bg-blue-600 text-white text-center">
+      <img src="logo.png" alt="Summit Metal Supply" class="h-16 mx-auto mb-2">
+      <h1 class="text-2xl font-black">Summit Metal Supply</h1>
+      <p class="text-blue-100">Roof Calculator</p>
+    </div>
+    <div id="auth-form" class="p-6">
+      <div id="email-step">
+        <p class="text-slate-600 mb-4 text-center">Enter your email address to receive an access code.</p>
+        <input type="email" id="auth-email" class="input-field mb-4" placeholder="your@email.com" onkeypress="if(event.key==='Enter')requestCode()">
+        <button onclick="requestCode()" id="request-btn" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">Request Access Code</button>
+      </div>
+      <div id="code-step" class="hidden">
+        <p class="text-slate-600 mb-4 text-center">Enter the 6-digit code sent to <span id="sent-email" class="font-bold"></span></p>
+        <input type="text" id="auth-code" class="input-field mb-4 text-center text-2xl tracking-widest" placeholder="000000" maxlength="6" onkeypress="if(event.key==='Enter')verifyCode()">
+        <button onclick="verifyCode()" id="verify-btn" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">Verify Code</button>
+        <button onclick="document.getElementById('email-step').classList.remove('hidden'); document.getElementById('code-step').classList.add('hidden');" class="w-full mt-2 text-slate-500 py-2 hover:text-slate-700">← Try a different email</button>
+      </div>
+      <div id="blocked-step" class="hidden">
+        <div class="text-center py-8">
+          <p class="text-5xl font-black text-red-600 mb-4">GET YOUR OWN CALCULATOR</p>
+          <p class="text-slate-500">Access denied.</p>
+        </div>
+      </div>
+    </div>
+    <div class="px-6 pb-6 text-center">
+      <p class="text-xs text-slate-400">© 2025 Summit Metal Supply. All rights reserved.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content (hidden until authenticated) -->
+<div id="main-content" class="hidden">
   <div id="install-banner" class="no-print bg-blue-800 text-white p-3 flex justify-between items-center sticky top-0 z-[100] shadow-lg">
     <div class="flex items-center gap-3"><img src="logo.png" class="w-8 h-8 rounded" alt="logo"><p class="text-xs font-bold">Install Summit Calculator</p></div>
     <div class="flex gap-2"><button onclick="installApp()" class="bg-white text-blue-800 px-3 py-1 rounded text-xs font-black uppercase">Install</button><button onclick="closeInstallBanner()" class="text-white/70 px-2">×</button></div>
@@ -319,6 +355,158 @@
  * Copyright © 2025 Summit Metal Supply. All rights reserved.
  * Unauthorized use, copying, or distribution is prohibited.
  */
+    // ============ AUTHENTICATION ============
+// EmailJS credentials - REPLACE THESE WITH YOUR OWN
+const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY_HERE';
+const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID_HERE';
+const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID_HERE';
+
+// Blocked email domains
+const BLOCKED_DOMAINS = ['steeltile.com'];
+
+// Initialize EmailJS
+emailjs.init(EMAILJS_PUBLIC_KEY);
+
+let isAuthenticated = false;
+
+function checkAuth() {
+  const savedAuth = localStorage.getItem('smsCalcAuth');
+  if (savedAuth) {
+    try {
+      const authData = JSON.parse(savedAuth);
+      // Check if auth is less than 30 days old
+      if (Date.now() - authData.timestamp < 30 * 24 * 60 * 60 * 1000) {
+        isAuthenticated = true;
+        return true;
+      }
+    } catch (e) {
+      localStorage.removeItem('smsCalcAuth');
+    }
+  }
+  return false;
+}
+
+function showMainContent() {
+  document.getElementById('auth-modal').classList.add('hidden');
+  document.getElementById('main-content').classList.remove('hidden');
+}
+
+function requestCode() {
+  const emailInput = document.getElementById('auth-email');
+  const email = emailInput.value.trim().toLowerCase();
+  const btn = document.getElementById('request-btn');
+  
+  if (!email || !email.includes('@') || !email.includes('.')) {
+    alert('Please enter a valid email address');
+    emailInput.focus();
+    return;
+  }
+  
+  // Check for blocked domains
+  for (const domain of BLOCKED_DOMAINS) {
+    if (email.endsWith('@' + domain)) {
+      document.getElementById('email-step').classList.add('hidden');
+      document.getElementById('blocked-step').classList.remove('hidden');
+      return;
+    }
+  }
+  
+  // Generate 6-digit code
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  
+  // Store code temporarily with 10-minute expiry
+  sessionStorage.setItem('authCode', code);
+  sessionStorage.setItem('authEmail', email);
+  sessionStorage.setItem('authCodeTime', Date.now().toString());
+  
+  // Disable button while sending
+  btn.disabled = true;
+  btn.innerText = 'Sending...';
+  
+  // Send email via EmailJS
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    to_email: email,
+    code: code
+  })
+  .then(function() {
+    // Show code entry form
+    document.getElementById('sent-email').innerText = email;
+    document.getElementById('email-step').classList.add('hidden');
+    document.getElementById('code-step').classList.remove('hidden');
+    document.getElementById('auth-code').focus();
+  })
+  .catch(function(error) {
+    console.error('EmailJS error:', error);
+    alert('Failed to send code. Please try again.');
+    btn.disabled = false;
+    btn.innerText = 'Request Access Code';
+  });
+}
+
+function verifyCode() {
+  const enteredCode = document.getElementById('auth-code').value.trim();
+  const storedCode = sessionStorage.getItem('authCode');
+  const codeTime = parseInt(sessionStorage.getItem('authCodeTime') || '0');
+  const email = sessionStorage.getItem('authEmail');
+  const btn = document.getElementById('verify-btn');
+  
+  // Check if code is expired (10 minutes)
+  if (Date.now() - codeTime > 10 * 60 * 1000) {
+    alert('Code has expired. Please request a new one.');
+    document.getElementById('email-step').classList.remove('hidden');
+    document.getElementById('code-step').classList.add('hidden');
+    sessionStorage.removeItem('authCode');
+    sessionStorage.removeItem('authEmail');
+    sessionStorage.removeItem('authCodeTime');
+    return;
+  }
+  
+  if (enteredCode === storedCode) {
+    isAuthenticated = true;
+    localStorage.setItem('smsCalcAuth', JSON.stringify({
+      email: email,
+      timestamp: Date.now()
+    }));
+    
+    // Clean up
+    sessionStorage.removeItem('authCode');
+    sessionStorage.removeItem('authEmail');
+    sessionStorage.removeItem('authCodeTime');
+    
+    // Show main content
+    showMainContent();
+    
+    // Initialize calculator
+    initializeCalculator();
+  } else {
+    alert('Invalid code. Please try again.');
+    document.getElementById('auth-code').value = '';
+    document.getElementById('auth-code').focus();
+  }
+}
+
+function initializeCalculator() {
+  if (window.__SAVED_PROJECT__) {
+    document.getElementById('sections-container').innerHTML = '';
+    projectName = window.__SAVED_PROJECT__.projectName;
+    document.getElementById('project-name').value = projectName;
+    sections = window.__SAVED_PROJECT__.sections;
+    pairings = window.__SAVED_PROJECT__.pairings || [];
+    if (sections.length > 0) lastProfile = sections[0].profile || 'tuff';
+    sections.forEach(s => {
+      renderSection(s);
+      if (s.heightMode === 'calculated') {
+        switchHeightMode(s.id, 'calculated');
+      }
+    });
+    renderPairings();
+  } else {
+    addSection();
+  }
+  lucide.createIcons();
+}
+
+// ============ END AUTHENTICATION ============
     let activeDormerId = null, projectName = '', sections = [], lastProfile = 'tuff';
 
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -1197,32 +1385,17 @@ function saveDormerData() {
       }
     }
 
-// Initialize
-if (window.__SAVED_PROJECT__) {
-  // Clear any pre-rendered sections from saved HTML
-  document.getElementById('sections-container').innerHTML = '';
-  
-  projectName = window.__SAVED_PROJECT__.projectName;
-  document.getElementById('project-name').value = projectName;
-  sections = window.__SAVED_PROJECT__.sections;
-  pairings = window.__SAVED_PROJECT__.pairings || [];
-  if (sections.length > 0) lastProfile = sections[0].profile || 'tuff';
-  sections.forEach(s => {
-    renderSection(s);
-    // Restore height mode (show run input if it was used)
-    if (s.heightMode === 'calculated') {
-      switchHeightMode(s.id, 'calculated');
-    }
-  });
-  renderPairings();
-} else {
-  addSection();
+// Check authentication on page load
+if (checkAuth()) {
+  showMainContent();
+  initializeCalculator();
 }
-lucide.createIcons();
+// If not authenticated, auth-modal is already visible
    </script>
   <footer class="mt-8 mb-4 text-center text-slate-500 text-xs">
   <p>&copy; 2025 Summit Metal Supply. All rights reserved.</p>
   <p class="mt-1">This calculator is proprietary software. Unauthorized copying, modification, or distribution is prohibited.</p>
 </footer>
+  </div>
 </body> 
 </html>
