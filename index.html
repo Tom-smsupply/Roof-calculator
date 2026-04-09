@@ -649,8 +649,8 @@ function calculate(s) {
   
   for (let row = 0; row < totalRows; row++) {
     const rowBottomY = row * shingleHeight;
-    const rowTopY = (row + 1) * shingleHeight;
-    const rowMidY = rowBottomY + (shingleHeight / 2);
+    const rowTopY = Math.min((row + 1) * shingleHeight, h);
+    const rowMidY = (rowBottomY + rowTopY) / 2;
     
     // Calculate width at this row's position (at the middle of the row)
     let rowWidth;
