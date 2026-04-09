@@ -1375,7 +1375,7 @@ function saveDormerData() {
         <div><label class="text-[10px] font-black uppercase text-slate-400">Fold (In)</label><input type="number" class="input-field" value="${s.eaveFold||''}" oninput="updateVal(${s.id}, 'eaveFold', parseFloat(this.value))"></div>
       </div>
       <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4 no-print">
-        <div><label class="text-[10px] font-black uppercase text-slate-400">Angle</label><select class="input-field" onchange="updateVal(${s.id}, 'config', this.value)"><option value="right" ${s.config==='right'?'selected':''}>Right</option><option value="left" ${s.config==='left'?'selected':''}>Left</option><option value="both" ${s.config==='both'?'selected':''}>Both</option></select></div>
+        <div><label class="text-[10px] font-black uppercase text-slate-400">Angle</label><select class="input-field" onchange="updateVal(${s.id}, 'config', this.value)"><option value="right" ${s.config==='right'?'selected':''}>Right</option><option value="left" ${s.config==='left'?'selected':''}>Left</option><option value="both" ${s.config==='both'?'selected':''}>Both (Start in Centre)</option></select></div>
         <div id="run-input-${s.id}" style="display:none;"><label class="text-[10px] font-black uppercase text-slate-400">Run (In)</label><input type="number" class="input-field" value="${s.run||''}" oninput="updateVal(${s.id}, 'run', parseFloat(this.value)); calculateHeightFromRun(${s.id})" placeholder="Horizontal distance"></div>
       </div>
       <div class="mb-4 p-3 bg-slate-50 rounded-lg border no-print">
