@@ -624,7 +624,7 @@ function calculate(s) {
   }
   return { panelData: data, maxW, coverage: cov };
 }
-   function calculateShingles(s) {
+  function calculateShingles(s) {
   const r = parseFloat(s.ridge)||0, e = parseFloat(s.eave)||0, h = parseFloat(s.height)||0;
   if ((r <= 0 && e <= 0) || h <= 0) return null;
   
@@ -648,52 +648,74 @@ function calculate(s) {
   let rowData = [];
   
   for (let row = 0; row < totalRows; row++) {
-    const rowBottomY = row * shingleHeight; // distance from eave
+    const rowBottomY = row * shingleHeight;
     const rowTopY = (row + 1) * shingleHeight;
     const rowMidY = rowBottomY + (shingleHeight / 2);
     
-    // Calculate width at this row's position
+    // Calculate width at this row's position (at the middle of the row)
     let rowWidth;
+    const taperRatio = Math.min(1, rowMidY / h);
+    
     if (s.config === 'both') {
-      // Width tapers from both sides
-      const taperPerSide = (maxW - minW) / 2;
-      const taperRatio = Math.min(1, rowMidY / h);
-      rowWidth = maxW - (taperPerSide * 2 * taperRatio);
-    } else if (s.config === 'left' || s.config === 'right') {
-      // Width tapers from one side
-      const taper = maxW - minW;
-      const taperRatio = Math.min(1, rowMidY / h);
-      rowWidth = maxW - (taper * taperRatio);
+      // Width tapers equally from both sides
+      const totalTaper = maxW - minW;
+      rowWidth = maxW - (totalTaper * taperRatio);
     } else {
-      rowWidth = maxW;
+      // Width tapers from one side only
+      const totalTaper = maxW - minW;
+      rowWidth = maxW - (totalTaper * taperRatio);
     }
     rowWidth = Math.max(0, rowWidth);
     
-  // Account for stagger on even rows
-const isStaggered = row % 2 === 1;
-let shinglesInRow = rowWidth > 0 ? Math.ceil(rowWidth / shingleWidth) : 0;
-
-// Staggered rows need extra shingles to cover the offset
-if (isStaggered && shinglesInRow > 0) {
-  if (s.config === 'both') {
-    // Both sides exposed - need extra shingle for each side
-    shinglesInRow += 2;
-  } else {
-    // Only one side exposed - need 1 extra shingle
-    shinglesInRow += 1;
-  }
-}
-
-// Staggered rows need extra shingles to cover the offset
-if (isStaggered && shinglesInRow > 0) {
-  if (s.config === 'both') {
-    // Both sides exposed - need extra shingle for each side
-    shinglesInRow += 2;
-  } else {
-    // Only one side exposed - need 1 extra shingle
-    shinglesInRow += 1;
-  }
-}
+    // Stagger pattern
+    const isStaggered = row % 2 === 1;
+    const staggerOffset = isStaggered ? 11 : 0;
+    
+    // Calculate shingles needed based on config
+    let shinglesInRow = 0;
+    
+    if (rowWidth > 0) {
+      if (s.config === 'both') {
+        // Shingles laid from center outward
+        // Half the width on each side
+        const halfWidth = rowWidth / 2;
+        
+        // On one side: how many shingles from center to edge?
+        // With stagger, the pattern shifts 11" from center
+        const shinglesOneSide = Math.ceil((halfWidth + staggerOffset) / shingleWidth);
+        
+        // Total shingles = both sides
+        shinglesInRow = shinglesOneSide * 2;
+        
+        // But if staggered, the center shingle might be shared, so we may have overcounted by 1
+        // Actually, let's recalculate: from -halfWidth to +halfWidth with stagger offset
+        const leftEdge = -halfWidth;
+        const rightEdge = halfWidth;
+        
+        // First shingle position (accounting for stagger)
+        const firstShingleStart = -Math.ceil((halfWidth + staggerOffset) / shingleWidth) * shingleWidth + staggerOffset;
+        
+        // Count shingles that fall within the row width
+        shinglesInRow = 0;
+        for (let pos = firstShingleStart; pos < rightEdge; pos += shingleWidth) {
+          const shingleEnd = pos + shingleWidth;
+          // Shingle contributes if any part is within the row
+          if (shingleEnd > leftEdge && pos < rightEdge) {
+            shinglesInRow++;
+          }
+        }
+      } else {
+        // Shingles laid from one edge
+        // With stagger, first shingle starts at -11" (hangs over edge)
+        const startPos = isStaggered ? -staggerOffset : 0;
+        
+        // Count shingles needed to cover rowWidth
+        shinglesInRow = 0;
+        for (let pos = startPos; pos < rowWidth; pos += shingleWidth) {
+          shinglesInRow++;
+        }
+      }
+    }
     
     // Subtract shingles for dormers
     for (const d of enabledDormers) {
@@ -702,7 +724,6 @@ if (isStaggered && shinglesInRow > 0) {
       
       // Check if this row intersects the dormer
       if (rowTopY > dormerBottom && rowBottomY < dormerTop) {
-        // Row intersects dormer - calculate how many shingles to subtract
         const shinglesInDormer = Math.floor(d.width / shingleWidth);
         shinglesInRow = Math.max(0, shinglesInRow - shinglesInDormer);
       }
@@ -731,7 +752,7 @@ if (isStaggered && shinglesInRow > 0) {
     maxW: maxW,
     totalRows: totalRows
   };
-} 
+}
    function updateSummary() {
   let grandP = 0, grandIn = 0, grandSq = 0, actualSq = 0, tRidge = 0, tEave = 0, tVal = 0, tHip = 0, tGable = 0, tEndWall = 0, tSideWall = 0, mechSq = 0;
   let totalShingles = 0, totalShingleBoxes = 0, totalShingleSqFt = 0, totalShingleClips = 0;
