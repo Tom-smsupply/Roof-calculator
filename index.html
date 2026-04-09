@@ -1242,7 +1242,7 @@ svg.innerHTML = `
       if (!projectName.trim()) { alert("Please enter a Project Name."); return; }
       saveProjectAsHTML();
       const body = encodeURIComponent(`Hello Summit Metal Supply,\n\nI have created a roof project using the Summit Roof Calculator for "${projectName}".\n\nPlease find attached:\n1. The project file (automatically saved .html) – this contains all the inputs and can be reopened in the calculator.\n2. A PDF printout of the calculator results (generated via Print/PDF button) – this shows the summary and visuals.\n\nTotal Square Feet: ${document.getElementById('total-sq-ft').innerText}\nTotal Panels: ${document.getElementById('total-panels').innerText}\n\nPlease let me know the quote as soon as possible.\n\nThank you!`);
-      window.location.href = `mailto:info@smsupply.ca?subject=Roof Calculator: ${projectName}&body=${body}`;
+      window.location.href = `mailto:tom@smsupply.ca?subject=Roof Calculator: ${projectName}&body=${body}`;
     }
     function removeSection(id) { 
       if (sections.length > 1) { 
