@@ -1088,22 +1088,23 @@ svg.innerHTML = `
       lY = h/2 - 30 + staggerOffset;
     }
     
-    if (g.count > 1 && g.type === 'standard') {
+   if (g.count > 1) {
       // Multi-panel group: show arrows spanning the group
       const arrowPadding = 8;
       const arrowY = lY;
       const leftX = g.startX + arrowPadding;
       const rightX = g.endX - arrowPadding;
+      const color = g.type === 'standard' ? '#2563eb' : '#ef4444';
       
       // Draw spanning line with arrows
-      pLabels += `<line x1="${leftX}" y1="${arrowY}" x2="${rightX}" y2="${arrowY}" stroke="#1e40af" stroke-width="1.5"/>`;
-      pLabels += `<polygon points="${leftX},${arrowY} ${leftX+6},${arrowY-4} ${leftX+6},${arrowY+4}" fill="#1e40af"/>`;
-      pLabels += `<polygon points="${rightX},${arrowY} ${rightX-6},${arrowY-4} ${rightX-6},${arrowY+4}" fill="#1e40af"/>`;
+      pLabels += `<line x1="${leftX}" y1="${arrowY}" x2="${rightX}" y2="${arrowY}" stroke="${color}" stroke-width="1.5"/>`;
+      pLabels += `<polygon points="${leftX},${arrowY} ${leftX+6},${arrowY-4} ${leftX+6},${arrowY+4}" fill="${color}"/>`;
+      pLabels += `<polygon points="${rightX},${arrowY} ${rightX-6},${arrowY-4} ${rightX-6},${arrowY+4}" fill="${color}"/>`;
       
       // Label in center
       const labelWidth = g.len.toString().length * 7 + 12;
       pLabels += `<rect x="${centerX - labelWidth/2}" y="${arrowY-10}" width="${labelWidth}" height="20" fill="white" fill-opacity="0.95" rx="4"/>`;
-      pLabels += `<text x="${centerX}" y="${arrowY+5}" font-size="11" font-weight="900" fill="#1e40af" text-anchor="middle">${g.len}</text>`;
+      pLabels += `<text x="${centerX}" y="${arrowY+5}" font-size="11" font-weight="900" fill="${color}" text-anchor="middle">${g.len}</text>`;
     } else {
       // Single panel or under/over: regular label
       pLabels += `<g><rect x="${centerX-12}" y="${lY-8}" width="24" height="16" fill="white" fill-opacity="0.9" rx="4"/><text x="${centerX}" y="${lY+5}" font-size="10" font-weight="900" fill="${g.type==='standard'?'#1e40af':'#ef4444'}" text-anchor="middle">${g.len}</text></g>`;
